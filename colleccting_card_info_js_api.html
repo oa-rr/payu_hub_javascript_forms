@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Collecting Card Information</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Javascript API - SAQ A-EP Scope-->
+  <script language="JavaScript" type="text/javascript" src="https://js.paymentsos.com/v2/latest/token.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Javascript API Content -->
+  <div id="js-api" class="panel">
+    <h2>PayU Hub JS API Sample</h2>
+    <div>
+      <hr class="solid">
+    </div>
+    <div class="form-container">
+      <form id="js-api-form">
+        <input id="js-api-token-type" type="hidden" value="credit_card">
+
+
+        <input id="js-api-card-number" placeholder="0000 0000 0000 0000" type="text" class="field" minlength="8"
+          maxlength="23" oninput="formatCardNumber(this)" />
+
+        <input id="js-api-cardholder-name" class="field" placeholder="Cardholder name" />
+
+        <input id="js-api-exp-date" class="field" placeholder="MM / YY" maxlength="5" oninput="formatExpDate(this)" />
+
+        <input id="js-api-security-code" class="field" placeholder="XXX" maxlength="4" />
+
+        <button class="btn" type="submit" id="js-api-pay-button">Pay</button>
+      </form>
+    </div>
+    <div id="js-api-message" class="message"></div>
+  </div>
+
+</body>
+
+<script>
+
+  function formatCardNumber(input) {
+    let value = input.value;
+
+    // Removes all values that are not numbers
+    value = value.replace(/[^\d]/g, '');
+
+    // Adds an space every 4 numbers
+    value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+
+    // Assigns formated value
+    input.value = value.slice(0, 23);
+  }
+
+  function formatExpDate(input) {
+    let value = input.value;
+
+    // Removes all values that are not numbers
+    value = value.replace(/[^\d]/g, '');
+
+    // Obtains the month and year
+    let month = value.slice(0, 2);
+    let year = value.slice(2, 6);
+
+    // Adds "/" after month
+    if (value.length > 2) {
+      input.value = `${month} / ${year}`;
+    } else {
+      input.value = value;
+    }
+
+    // Removes "/" if user is trying to delete it
+    if (input.selectionStart === input.selectionEnd && input.selectionStart === 3 && input.value.charAt(2) === "/") {
+      input.value = input.value.slice(0, 2) + input.value.slice(3, 7);
+      input.selectionStart = input.selectionEnd = 2;
+    }
+  }
+
+  // Validates card length
+  function validateCardLength(creditCardNumber) {
+    return creditCardNumber.length >= 13 && creditCardNumber.length <= 19;
+  }
+
+  // cards vendors
+  const VENDOR = {
+    VISA: "VISA",
+    DINERS: "DINERS",
+    DISCOVER: "DISCOVER",
+    AMERICAN_EXPRESS: "AMERICAN EXPRESS",
+    MASTERCARD: "MASTERCARD",
+    TARJETA_NARANJA: "TARJETA NARANJA",
+    SHOPPING: "SHOPPING",
+    CABAL: "CABAL",
+    ARGENCARD: "ARGENCARD",
+    TARJETA_CENCOSUD: "TARJETA CENCOSUD",
+    HIPERCARD: "HIPERCARD",
+    CODENSA: "CODENSA",
+    CREDENCIAL: "CREDENCIAL",
+    ELO: "ELO",
+    VISA_DEBIT: "VISA DEBIT",
+    MASTERCARD_DEBIT: "MASTERCARD DEBIT",
+    JCB: "JCB",
+    OTHER: "OTHER",
+    UNKNOWN: "UNKNOWN"
+  };
+
+  // Detects whats the card vendor
+  function detectVendor(creditCardNumber) {
+
+    if (/^4[0-9]{12}(?:[0-9]{3})?$/.test(creditCardNumber)) {  //^4[0-9]{12}(?:[0-9]{3}){0,2}$ 19 digits
+      return VENDOR.VISA;
+    } else if (/^3(?:0[0-5]|[68][0-9])[0-9]{11}$/.test(creditCardNumber)) {
+      return VENDOR.DINERS;
+    } else if (/^6(?:011|5[0-9]{2})[0-9]{12}$/.test(creditCardNumber)) {
+      return VENDOR.DISCOVER;
+    } else if (/^3[47][0-9]{13}$/.test(creditCardNumber)) {  //^6(?:011|5[0-9]{2})[0-9]{12,15}$ 19 digits
+      return VENDOR.AMERICAN_EXPRESS;
+    } else if (/^(603493\d{10}|518902\d{11}|519767\d{10}|537465\d{10})$/.test(creditCardNumber)) {
+      return VENDOR.TARJETA_CENCOSUD;
+    } else if (/^5[1-5][0-9]{14}$/.test(creditCardNumber)) { //^(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)(?:[0-9]{3}){4,5}$ 19 digits
+      return VENDOR.MASTERCARD
+    } else if (/^589562\d{10}$/.test(creditCardNumber)) {
+      return VENDOR.TARJETA_NARANJA
+    } else if (/(^603488(\d{10})$)|(^2799(\d{9})$)/.test(creditCardNumber)) {
+      return VENDOR.SHOPPING; //PRIVATE LABEL
+    } else if (/(^604(([23][0-9][0-9])|(400))(\d{10})$)|(^589657(\d{10})$)/.test(creditCardNumber)) {
+      return VENDOR.CABAL;
+    } else if (/^(5011|5020|5896|6064|6070|6045|6034)\d{12}(?:\d{2})?$/.test(creditCardNumber)) {
+      return VENDOR.ARGENCARD
+    } else if (/^(3841[046]0|606282|637(5(68|99)|095|6(09|12)))(\d{7}|\d{10}|\d{13})$/.test(creditCardNumber)) {
+      return VENDOR.HIPERCARD;
+    } else if (/^590712\d{10}$/.test(creditCardNumber)) {
+      return VENDOR.CODENSA;
+    } else if (/^(541203|540625|549151)(\\d{10})$/.test(creditCardNumber)) {
+      return VENDOR.CREDENCIAL;
+    } else if (/^(4011[67]8|43(1274|8935)|45(1416|7393|763[12])|50(4175|6699|67[0-6]\d|677[0-4])|627780|63(6297|6368)|65(0(0[3-9]|[1-3]\d)|[13-9]\d{2}))\d{10,16}$/.test(creditCardNumber)) { // supports 16, 17, 18 or 19 digits
+      return VENDOR.ELO;
+    } else if (/^(?:2131|1800|35\d{3})\d{11}$/.test(creditCardNumber)) {
+      return VENDOR.JCB;
+    } else if (/\\d{16}$/.test(creditCardNumber)) {
+      return VENDOR.OTHER;
+    } else {
+      return VENDOR.UNKNOWN;
+    }
+  }
+
+  // Validates the card is luhn valid
+  function validateLuhnAlgorithm(creditCardNumber) {
+    const reversedNumbers = creditCardNumber.split("").reverse().join("");
+    let sum = 0;
+    for (let i = 0; i < reversedNumbers.length; i++) {
+      let digit = parseInt(reversedNumbers[i]);
+      if (i % 2 !== 0) {
+        digit *= 2;
+        if (digit > 9) {
+          digit -= 9;
+        }
+      }
+      sum += digit;
+    }
+    return sum % 10 === 0;
+  }
+
+  // Validates card is not expired
+  function validateDate(creditCardExpirationDate) {
+    // Gets current date
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // Gets month and year from expiration date
+    const inputMonth = parseInt(creditCardExpirationDate.substr(0, 2));
+    const inputYear = parseInt(creditCardExpirationDate.substr(3, 4));
+
+    // Gets expiration date
+    const inputDate = new Date(inputYear, inputMonth - 1, 1);
+    inputDate.setMonth(inputDate.getMonth() + 1);
+    inputDate.setDate(inputDate.getDate() - 1);
+
+    // Verifies expiration date
+    if (inputDate < now) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  // Verifies security code according to card vendor
+  function validateSecurityCode(creditCardNumber, creditCardSecurityCode) {
+    const cardVendor = detectVendor(creditCardNumber);
+    const securityCodeLength = creditCardSecurityCode.replace(/\D/g, "").length;
+
+    if (cardVendor === VENDOR.AMERICAN_EXPRESS) {
+      if (securityCodeLength === 4) {
+        return true;
+      } else if (securityCodeLength === 3) {
+        return false;
+      }
+    } else if (securityCodeLength === 3) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Validates the card in general
+  function validateCard(creditCardNumber, creditCardExpirationDate, creditCardSecurityCode) {
+    const isCardLengthValid = validateCardLength(creditCardNumber);
+    const cardVendor = detectVendor(creditCardNumber);
+    const isLuhnValid = validateLuhnAlgorithm(creditCardNumber);
+    const isExpDateValid = validateDate(creditCardExpirationDate);
+    const isSecCodeValid = validateSecurityCode(creditCardNumber, creditCardSecurityCode);
+
+    console.log('Card Vendor: ' + cardVendor);
+
+    if (cardVendor === VENDOR.TARJETA_NARANJA || cardVendor === VENDOR.ELO || cardVendor === VENDOR.JCB) {
+      if (isCardLengthValid && isExpDateValid && isSecCodeValid) {
+        return true;
+      } else {
+        let error = '';
+        if (!isCardLengthValid) {
+          error += 'Card length is invalid. ';
+        }
+        if (!isExpDateValid) {
+          error += 'Card expiration date is invalid. ';
+        }
+        if (!isSecCodeValid) {
+          error += 'Card security code is invalid. ';
+        }
+        return error.trim();
+      }
+    } else if (cardVendor !== VENDOR.UNKNOWN && isCardLengthValid && isLuhnValid && isExpDateValid && isSecCodeValid) {
+      return true;
+    } else {
+      let error = '';
+      if (!isCardLengthValid) {
+        error += 'Card length is invalid. ';
+      }
+      if (!isLuhnValid || cardVendor === VENDOR.UNKNOWN) {
+        error += 'The card number is not valid. ';
+      }
+      if (!isExpDateValid) {
+        error += 'Card expiration date is invalid. ';
+      }
+      if (!isSecCodeValid) {
+        error += 'Card security code is invalid. ';
+      }
+      return error.trim();
+    }
+  }
+
+  function validateForm() {
+    const cardNumber = document.getElementById("js-api-card-number").value;
+    const expirationDate = document.getElementById("js-api-exp-date").value;
+    const cardholderName = document.getElementById("js-api-cardholder-name").value;
+    const securityCode = document.getElementById("js-api-security-code").value;
+
+    if (cardNumber == '') {
+      return 'Please enter card number';
+    } else if (cardholderName == '') {
+      return 'Please enter cardholder name';
+    } else if (expirationDate == '') {
+      return 'Please enter card expiration date';
+    } else if (securityCode == '') {
+      return 'Please enter card security code';
+    }
+    else {
+      return true;
+    }
+  }
+
+  // Shows a message to user
+  function showMessage(message, color) {
+    document.getElementById("js-api-message").textContent = message.toString();
+    document.getElementById("js-api-message").style.color = color;
+  }
+
+  async function getTokenAndCvv() {
+    return new Promise((resolve, reject) => {
+      document.getElementById('js-api-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const isFormValid = validateForm();
+
+        if (isFormValid == true) {
+          const creditCardNumber = document.getElementById("js-api-card-number").value.replace(/\s/g, ''); // removes spaces
+          const creditCardExpirationDate = document.getElementById("js-api-exp-date").value;
+          const creditCardSecurityCode = document.getElementById("js-api-security-code").value;
+          const isCardValid = validateCard(creditCardNumber, creditCardExpirationDate, creditCardSecurityCode);
+
+          if (isCardValid == true) {
+            POS.setEnvironment("test"); // Set Environment
+            POS.setPublicKey("4937252c-4dd3-4002-8ed9-74ae2c6d80cc"); // Set Business Unit Publick Key
+
+            const javascriptApiData = {
+              token_type: document.getElementById("js-api-token-type").value,
+              holder_name: document.getElementById("js-api-cardholder-name").value,
+              card_number: creditCardNumber,
+              expiration_date: document.getElementById("js-api-exp-date").value.replace(/\s/g, ''),
+              credit_card_cvv: document.getElementById("js-api-security-code").value,
+            }
+
+            await POS.tokenize(
+              javascriptApiData,
+              // callback function, needed for grabbing the card token from the POSC.tokenize function
+              function showToken(data) {
+                result = JSON.parse(data);
+                // Token Data
+                resolve({ token: result.token, encrypted_cvv: result.encrypted_cvv });
+                // Shows tokenization response for illustration purposes  
+                showMessage(data, "black");
+              }
+            );
+
+          } else {
+            // Shows card validation alert
+            showMessage(isCardValid, "red");
+          }
+        } else {
+          // Shows form validation alert
+          showMessage(isFormValid, "red");
+        }
+      });
+    });
+  }
+
+  async function main() {
+    try {
+      const { token, encrypted_cvv } = await getTokenAndCvv();
+      console.log(`token: ${token}, encrypted_cvv: ${encrypted_cvv}`);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  main();
+
+</script>
+
+<!-- Page Styling -->
+<style>
+  body {
+    background: linear-gradient(90deg, rgba(235, 242, 247, 1) 0%, rgba(255, 255, 255, 1) 100%);
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  hr.solid {
+    border-top: 3px solid #bbb;
+    margin-bottom: 2em;
+  }
+
+  .panel {
+    margin: 0 auto;
+    max-width: 295px;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    display: block;
+    width: 80%;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    place-content: center;
+  }
+
+  .label {
+    display: flex;
+    width: 100%;
+    margin-bottom: 1em;
+    justify-content: center;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #333;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .field {
+    box-sizing: border-box;
+    line-height: 1.5;
+    font-size: 13px;
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+    border: 2px solid #d9d9d9;
+    color: #333;
+    border: 1px solid #ddd;
+    background-color: #fbfbfd;
+    border-radius: 10px;
+    margin-bottom: 1.5em;
+    margin-top: -0.25em;
+    position: relative;
+    padding: 10px;
+    word-break: break-word;
+    font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
+    opacity: 1;
+  }
+
+  ::placeholder {
+    color: rgb(155, 172, 200);
+    opacity: 1;
+    line-height: 1.5;
+    font-family: sans-serif;
+  }
+
+  .btn {
+    background: linear-gradient(to bottom, #4265af 0%, #00a7a4 100%);
+    color: #fff;
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom-color: rgba(46, 86, 153, 0.4);
+    border-top: 0;
+    border-radius: 10px;
+    font-size: 1.2em;
+    text-shadow: rgba(46, 86, 153, 0.298039) 0px -1px 0px;
+    line-height: 0.5em;
+    -webkit-font-smoothing: antialiased;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.3s ease-in-out;
+    cursor: pointer;
+    letter-spacing: 1px;
+    padding: 1em;
+  }
+
+  .btn:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    transition: none;
+  }
+
+  .message {
+    contain: paint;
+    text-align: center;
+    overflow-wrap: break-word;
+    margin-top: 1em;
+  }
+</style>
+
+</html>
+
+<!-- 
+  
+  After create token, you can create a charge or authorization and send the token generated with
+  the secure fields form, consider that it is necessary to create Payment resource first
+
+  Setting Up PaymentsOS
+  https://developers.paymentsos.com/docs/getting-started/setting-up-paymentsos.html
+
+  Providers
+  https://developers.paymentsos.com/docs/connect/finding-a-provider.html
+
+  Payment
+  https://developers.paymentsos.com/docs/flows-and-operations/payment-and-transaction-statuses.html
+
+  Charge
+  https://developers.paymentsos.com/docs/flows-and-operations/charge.html
+
+  Authorization and Capture
+  https://developers.paymentsos.com/docs/flows-and-operations/authorize-capture.html
+
+-->
