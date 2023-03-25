@@ -27,7 +27,7 @@
 
         <input id="js-api-cardholder-name" class="field" placeholder="Cardholder name" />
 
-        <input id="js-api-exp-date" class="field" placeholder="MM / YY" maxlength="5" oninput="formatExpDate(this)" />
+        <input id="js-api-exp-date" class="field" placeholder="MM / YY" maxlength="7" oninput="formatExpDate(this)" />
 
         <input id="js-api-security-code" class="field" placeholder="XXX" maxlength="4" />
 
@@ -163,18 +163,17 @@
     return sum % 10 === 0;
   }
 
-  // Validates card is not expired
   function validateDate(creditCardExpirationDate) {
     // Gets current date
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
     // Gets month and year from expiration date
-    const inputMonth = parseInt(creditCardExpirationDate.substr(0, 2));
-    const inputYear = parseInt(creditCardExpirationDate.substr(3, 4));
+    const inputMonth = parseInt(creditCardExpirationDate.slice(0, 2));
+    const inputYear = parseInt(creditCardExpirationDate.substr(5, 6));
 
     // Gets expiration date
-    const inputDate = new Date(inputYear, inputMonth - 1, 1);
+    const inputDate = new Date(inputYear + 2000, inputMonth - 1, 1);
     inputDate.setMonth(inputDate.getMonth() + 1);
     inputDate.setDate(inputDate.getDate() - 1);
 
@@ -289,8 +288,8 @@
           const isCardValid = validateCard(creditCardNumber, creditCardExpirationDate, creditCardSecurityCode);
 
           if (isCardValid == true) {
-            POS.setEnvironment("test"); // Set Environment
-            POS.setPublicKey("4937252c-4dd3-4002-8ed9-74ae2c6d80cc"); // Set Business Unit Publick Key
+            POS.setEnvironment(""); // SET ENVIRONMENT
+            POS.setPublicKey(""); // SET PAYU APP BUSINESS UNIT PUBLIC KEY
 
             const javascriptApiData = {
               token_type: document.getElementById("js-api-token-type").value,
