@@ -24,6 +24,85 @@
       <form id="js-api-form">
         <input id="js-api-token-type" type="hidden" value="credit_card">
 
+        <label class="label">Document Identity</label>
+
+        <div>
+          <label for="country"></label>
+          <select id="js-api-document-country" class="field">
+            <option value="Argentina">Argentina</option>
+            <option value="Brazil">Brazil</option>
+            <option value="Chile">Chile</option>
+            <option value="Colombia">Colombia</option>
+            <option value="Mexico">Mexico</option>
+            <option value="Peru">Peru</option>
+            <option value="Other">Others</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="documents"></label>
+          <select id="js-api-document-type" class="field">
+            <option value="CC">Citizenship card</option>
+          </select>
+        </div>
+
+        <div>
+          <input id="js-api-document-number" class="field" placeholder="Document number" />
+        </div>
+
+        <div>
+          <label class="label" for="documents">Billing Address</label>
+          <input id="js-api-billing-country" class="field" placeholder="Country, i.e. ARG" />
+          <input id="js-api-billing-city" class="field" placeholder="City" />
+          <input id="js-api-billing-line1" class="field" placeholder="Line1" />
+          <input id="js-api-billing-line2" class="field" placeholder="Line 2" />
+          <input id="js-api-billing-first-name" class="field" placeholder="First Name" />
+          <input id="js-api-billing-last-name" class="field" placeholder="Last Name" />
+          <input id="js-api-billing-email" class="field" placeholder="Email" inputmode="email" />
+          <input id="js-api-billing-phone" class="field" placeholder="Phone" type="number" />
+        </div>
+
+        <div>
+
+          <label class="label" for="documents">Shipping Address</label>
+
+          <div class="checkbox-address">
+            <label for="same-address">Same as Billing Address:</label>
+            <input type="checkbox" id="same-address" onclick="toggleShippingAddress()">
+          </div>
+
+          <div id="shipping-address">
+
+            <label for="shipping-country"></label>
+            <input type="text" id="js-api-shipping-country" class="field" placeholder="Country">
+
+            <label for="shipping-city"></label>
+            <input type="text" id="js-api-shipping-city" class="field" placeholder="City">
+
+            <label for="shipping-line1"></label>
+            <input type="text" id="js-api-shipping-line1" class="field" placeholder="Line1">
+
+            <label for="shipping-line2"></label>
+            <input type="text" id="js-api-shipping-line2" class="field" placeholder="Line 2">
+
+            <label for="shipping-first-name"></label>
+            <input type="text" id="js-api-shipping-first-name" class="field" placeholder="First Name">
+
+            <label for="shipping-last-name"></label>
+            <input type="text" id="js-api-shipping-last-name" class="field" placeholder="Last Name">
+
+            <label for="shipping-email"></label>
+            <input type="email" id="js-api-shipping-email" class="field" placeholder="Email">
+
+            <label for="shipping-phone"></label>
+            <input type="number" id="js-api-shipping-phone" class="field" placeholder="Phone">
+
+
+          </div>
+        </div>
+
+
+        <label class="label" for="documents">Card Information</label>
 
         <input id="js-api-card-number" placeholder="0000 0000 0000 0000" type="text" class="field" minlength="8"
           maxlength="23" oninput="formatCardNumber(this)" />
@@ -252,26 +331,6 @@
     }
   }
 
-  function validateForm() {
-    const cardNumber = document.getElementById("js-api-card-number").value;
-    const expirationDate = document.getElementById("js-api-exp-date").value;
-    const cardholderName = document.getElementById("js-api-cardholder-name").value;
-    const securityCode = document.getElementById("js-api-security-code").value;
-
-    if (cardNumber == '') {
-      return 'Please enter card number';
-    } else if (cardholderName == '') {
-      return 'Please enter cardholder name';
-    } else if (expirationDate == '') {
-      return 'Please enter card expiration date';
-    } else if (securityCode == '') {
-      return 'Please enter card security code';
-    }
-    else {
-      return true;
-    }
-  }
-
   // Shows a message to user
   function showMessage(message, color) {
     document.getElementById("js-api-message").textContent = message.toString();
@@ -294,13 +353,30 @@
             POS.setEnvironment(""); // SET ENVIRONMENT
             POS.setPublicKey(""); // SET PAYU APP BUSINESS UNIT PUBLIC KEY
 
+            const { billingAddress, shippingAddress } = getAddresses(); // SHIPPING ADDRESS SHOULD BE USE IN CUSTOMER OR PAYMENT RESOURCE
+
             const javascriptApiData = {
               token_type: document.getElementById("js-api-token-type").value,
               holder_name: document.getElementById("js-api-cardholder-name").value,
               card_number: creditCardNumber,
               expiration_date: document.getElementById("js-api-exp-date").value.replace(/\s/g, ''),
               credit_card_cvv: document.getElementById("js-api-security-code").value,
-            }
+              // Additional information
+              identity_document: {
+                number: document.getElementById("js-api-document-number").value,
+                type: document.getElementById("js-api-document-type").value
+              },
+              billing_address: {
+                country: billingAddress.country,
+                city: billingAddress.city,
+                line1: billingAddress.line1,
+                line2: billingAddress.line2,
+                first_name: billingAddress.first_name,
+                last_name: billingAddress.last_name,
+                email: billingAddress.email,
+                phone: billingAddress.phone
+              }
+            };
 
             await POS.tokenize(
               javascriptApiData,
@@ -314,7 +390,7 @@
                 // Shows tokenization response for illustration purposes
                 Swal.fire({
                   icon: 'success',
-                  title: 'Tokenization successful!',
+                  title: 'Successful request!',
                   text: data,
                   confirmButtonText: 'OK',
                   timer: 10000,
@@ -354,6 +430,194 @@
 
 </script>
 
+<!-- Documents -->
+<script>
+
+  const documents = [
+    { iso: "CC", description: "Citizenship card", country: "Colombia" },
+    { iso: "CE", description: "Foreign citizenship card", country: "Colombia, Peru" },
+    { iso: "CEL", description: "When identified by the mobile line", country: "Colombia" },
+    { iso: "CEP", description: "Electronic Payment Receipt", country: "Mexico" },
+    { iso: "CI", description: "Identity Card", country: "Argentina, Chile" },
+    { iso: "CNPJ", description: "National Register of Legal Entities", country: "Brazil" }, // Valid format XXXXXXXXXXXXXX
+    { iso: "CPF", description: "Registration of Individuals", country: "Brazil" }, // Valid format XXX.XXX.XXX-XX
+    { iso: "CUIL", description: "Unique Labor Identification Code", country: "Argentina" },
+    { iso: "CUIT", description: "Single Tax identification", country: "Argentina" },
+    { iso: "CURP", description: "Unique Population Registry Code", country: "Mexico" },
+    { iso: "DE", description: "Foreing Identifiaction Number", country: "Peru" },
+    { iso: "DL", description: "Driver License", country: "Other" },
+    { iso: "DNI", description: "National Identity Document", country: "Argentina, Peru, Chile" },
+    { iso: "DNIE", description: "National Identity Document - Electronical", country: "Argentina, Peru, Chile" },
+    { iso: "EIN", description: "Employer Identification Number", country: "Peru" },
+    { iso: "ID", description: "Identification", country: "Other" },
+    { iso: "IDC", description: "Client´s unique identifier, in the case of unique customer / utility consumer ID’s.", country: "Other" },
+    { iso: "IFE", description: "Federal Electoral Institute", country: "Mexico" },
+    { iso: "LC", description: "Civic Notebook", country: "Argentina" },
+    { iso: "LE", description: "Book enlistment", country: "Argentina" },
+    { iso: "NIF", description: "Tax identification number", country: "Other" },
+    { iso: "NIT", description: "Tax identification number", country: "Colombia" },
+    { iso: "PP", description: "Passport", country: "Other" },
+    { iso: "RC", description: "Birth certificate", country: "Colombia" },
+    { iso: "RDE", description: "RDE document type", country: "Other" },
+    { iso: "RE", description: "RE document type", country: "Other" },
+    { iso: "RFC", description: "Federal taxpayer registry", country: "Mexico" },
+    { iso: "RIF", description: "Tax Information Registry", country: "Other" },
+    { iso: "RM", description: "Commercial Register", country: "Other" },
+    { iso: "RMC", description: "Consular Registration", country: "Other" },
+    { iso: "RNC", description: "National Taxpayers Registry", country: "Other" },
+    { iso: "RUC", description: "Unique Taxpayer Registration", country: "Peru" },
+    { iso: "RUN", description: "Unique National Role", country: "Chile" },
+    { iso: "RUT", description: "Unique Tributary Role", country: "Chile" },
+    { iso: "SC", description: "Safe Passage", country: "Other" },
+    { iso: "SIEM", description: "Mexican Business Information System", country: "Mexico" },
+    { iso: "SSN", description: "Social Security Number", country: "Other" },
+    { iso: "TI", description: "Identity Card", country: "Colombia" }
+  ];
+
+  const countrySelect = document.querySelector("#js-api-document-country");
+  const documentSelect = document.querySelector("#js-api-document-type");
+
+  function generateDocumentOptions(country) {
+    // Vaciar el select actual
+    documentSelect.innerHTML = "";
+
+    // Generar las opciones basadas en el país seleccionado
+    const documentOptions = documents
+      .filter((document) => document.country.includes(country))
+      .map((document) => {
+        return `<option value="${document.iso}">${document.description}</option>`;
+      })
+      .join("");
+
+    // Agregar las opciones al select
+    documentSelect.innerHTML = documentOptions;
+  }
+
+  // Generar las opciones iniciales
+  generateDocumentOptions(countrySelect.value);
+
+  // Actualizar las opciones de documentos cuando cambie el país seleccionado
+  countrySelect.addEventListener("change", (event) => {
+    generateDocumentOptions(event.target.value);
+  });
+
+</script>
+
+
+<!-- Addresses -->
+<script>
+
+  function getAddresses() {
+    const sameAddressCheckbox = document.getElementById('same-address');
+    const billingAddress = {
+      country: document.getElementById('js-api-billing-country').value,
+      city: document.getElementById('js-api-billing-city').value,
+      line1: document.getElementById('js-api-billing-line1').value,
+      line2: document.getElementById('js-api-billing-line2').value,
+      firstName: document.getElementById('js-api-billing-first-name').value,
+      lastName: document.getElementById('js-api-billing-last-name').value,
+      email: document.getElementById('js-api-billing-email').value,
+      phone: document.getElementById('js-api-billing-phone').value,
+    };
+
+    const shippingAddress = {
+      country: document.getElementById('js-api-shipping-country').value,
+      city: document.getElementById('js-api-shipping-city').value,
+      line1: document.getElementById('js-api-shipping-line1').value,
+      line2: document.getElementById('js-api-shipping-line2').value,
+      firstName: document.getElementById('js-api-shipping-first-name').value,
+      lastName: document.getElementById('js-api-shipping-last-name').value,
+      email: document.getElementById('js-api-shipping-email').value,
+      phone: document.getElementById('js-api-shipping-phone').value,
+    };
+
+    if (sameAddressCheckbox.checked) {
+
+      document.getElementById('js-api-shipping-country').value = billingAddress.country;
+      document.getElementById('js-api-shipping-city').value = billingAddress.city;
+      document.getElementById('js-api-shipping-line1').value = billingAddress.line1;
+      document.getElementById('js-api-shipping-line2').value = billingAddress.line2;
+      document.getElementById('js-api-shipping-first-name').value = billingAddress.firstName;
+      document.getElementById('js-api-shipping-last-name').value = billingAddress.lastName;
+      document.getElementById('js-api-shipping-email').value = billingAddress.email;
+      document.getElementById('js-api-shipping-phone').value = billingAddress.phone;
+
+      return { billingAddress, shippingAddress: billingAddress };
+    } else {
+      return { billingAddress, shippingAddress };
+    }
+  }
+
+  function toggleShippingAddress() {
+    var checkBox = document.getElementById("same-address");
+    var shippingAddress = document.getElementById("shipping-address");
+
+    if (checkBox.checked) {
+      shippingAddress.style.display = "none";
+    } else {
+
+      document.getElementById('js-api-shipping-country').value = '';
+      document.getElementById('js-api-shipping-city').value = '';
+      document.getElementById('js-api-shipping-line1').value = '';
+      document.getElementById('js-api-shipping-line2').value = '';
+      document.getElementById('js-api-shipping-first-name').value = '';
+      document.getElementById('js-api-shipping-last-name').value = '';
+      document.getElementById('js-api-shipping-email').value = '';
+      document.getElementById('js-api-shipping-phone').value = ''
+
+      shippingAddress.style.display = "block";
+    }
+  }
+</script>
+
+<!-- Addresses -->
+<script>
+  function validateForm() {
+    const documentNumber = document.getElementById('js-api-document-number').value;
+    const country = document.getElementById('js-api-billing-country').value;
+    const city = document.getElementById('js-api-billing-city').value;
+    const line1 = document.getElementById('js-api-billing-line1').value;
+    const line2 = document.getElementById('js-api-billing-line2').value;
+    const firstName = document.getElementById('js-api-billing-first-name').value;
+    const lastName = document.getElementById('js-api-billing-last-name').value;
+    const email = document.getElementById('js-api-billing-email').value;
+    const phone = document.getElementById('js-api-billing-phone').value;
+    const cardNumber = document.getElementById("js-api-card-number").value;
+    const expirationDate = document.getElementById("js-api-exp-date").value;
+    const cardholderName = document.getElementById("js-api-cardholder-name").value;
+    const securityCode = document.getElementById("js-api-security-code").value;
+
+    if (documentNumber == '') {
+      return 'Please enter document number';
+    } else if (country == '') {
+      return 'Please enter billing country';
+    } else if (city == '') {
+      return 'Please enter billing city';
+    } else if (line1 == '') {
+      return 'Please enter billing address';
+    } else if (firstName == '') {
+      return 'Please enter billing first name';
+    } else if (lastName == '') {
+      return 'Please enter billing last name';
+    } else if (email == '') {
+      return 'Please enter billing email';
+    } else if (phone == '') {
+      return 'Please enter billing phone';
+    } else if (cardNumber == '') {
+      return 'Please enter card number';
+    } else if (cardholderName == '') {
+      return 'Please enter cardholder name';
+    } else if (expirationDate == '') {
+      return 'Please enter card expiration date';
+    } else if (securityCode == '') {
+      return 'Please enter card security code';
+    } else {
+      return true;
+    }
+  }
+
+</script>
+
 <!-- Page Styling -->
 <style>
   body {
@@ -366,12 +630,12 @@
 
   hr.solid {
     border-top: 3px solid #bbb;
-    margin-bottom: 2em;
+    margin-bottom: 1em;
   }
 
   .panel {
     margin: 0 auto;
-    max-width: 295px;
+    max-width: 500px;
     background-color: white;
     border: 1px solid #ddd;
     padding: 20px;
@@ -425,6 +689,22 @@
     opacity: 1;
     line-height: 1.5;
     font-family: sans-serif;
+  }
+
+  .checkbox-address {
+    box-sizing: border-box;
+    line-height: 1.5;
+    font-size: 13px;
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+    margin-bottom: 1.5em;
+    margin-top: -0.25em;
+    position: relative;
+    padding: 10px;
+    word-break: break-word;
+    font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
+    opacity: 1;
   }
 
   .btn {
