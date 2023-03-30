@@ -16,7 +16,10 @@
 
   <!-- Javascript API Content -->
   <div id="js-api" class="panel">
-    <h2>PayU Hub JS API Sample</h2>
+    <div>
+      <h2>PayU Hub JS API Sample With Additional Info</h2>
+      <p class="subtitle">SAQ A-EP</p>
+    </div>
     <div>
       <hr class="solid">
     </div>
@@ -123,37 +126,28 @@
 
 <script>
 
+  // Formats the card like this 0000 0000 0000 0000 000
   function formatCardNumber(input) {
     let value = input.value;
-
-    // Removes all values that are not numbers
-    value = value.replace(/[^\d]/g, '');
-
-    // Adds an space every 4 numbers
-    value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-
-    // Assigns formated value
-    input.value = value.slice(0, 23);
+    value = value.replace(/[^\d]/g, ''); // Removes all values that are not numbers
+    value = value.replace(/(\d{4})(?=\d)/g, '$1 '); // Adds an space every 4 numbers
+    input.value = value.slice(0, 23); // Assigns formated value
   }
 
+  // Formats the expiration date like this MM / YY
   function formatExpDate(input) {
     let value = input.value;
+    value = value.replace(/[^\d]/g, ''); // Removes all values that are not numbers
+    let month = value.slice(0, 2); // Obtains the month
+    let year = value.slice(2, 6); // Obtains the year
 
-    // Removes all values that are not numbers
-    value = value.replace(/[^\d]/g, '');
-
-    // Obtains the month and year
-    let month = value.slice(0, 2);
-    let year = value.slice(2, 6);
-
-    // Adds "/" after month
     if (value.length > 2) {
-      input.value = `${month} / ${year}`;
+      input.value = `${month} / ${year}`; // Adds " / " after month
     } else {
       input.value = value;
     }
 
-    // Removes "/" if user is trying to delete it
+    // Removes " / " if user is trying to modify expiration date
     if (input.selectionStart === input.selectionEnd && input.selectionStart === 3 && input.value.charAt(2) === "/") {
       input.value = input.value.slice(0, 2) + input.value.slice(3, 7);
       input.selectionStart = input.selectionEnd = 2;
@@ -165,7 +159,7 @@
     return creditCardNumber.length >= 13 && creditCardNumber.length <= 19;
   }
 
-  // cards vendors
+  // LATAM Cards Vendors
   const VENDOR = {
     VISA: "VISA",
     DINERS: "DINERS",
@@ -180,55 +174,55 @@
     HIPERCARD: "HIPERCARD",
     CODENSA: "CODENSA",
     CREDENCIAL: "CREDENCIAL",
+    FALABELLA: "CMR FALABELLA",
+    NEQUI: "NEQUI",
     ELO: "ELO",
-    VISA_DEBIT: "VISA DEBIT",
-    MASTERCARD_DEBIT: "MASTERCARD DEBIT",
-    JCB: "JCB",
     OTHER: "OTHER",
     UNKNOWN: "UNKNOWN"
   };
 
   // Detects whats the card vendor
   function detectVendor(creditCardNumber) {
-
-    if (/^4[0-9]{12}(?:[0-9]{3})?$/.test(creditCardNumber)) {  //^4[0-9]{12}(?:[0-9]{3}){0,2}$ 19 digits
-      return VENDOR.VISA;
-    } else if (/^3(?:0[0-5]|[68][0-9])[0-9]{11}$/.test(creditCardNumber)) {
-      return VENDOR.DINERS;
-    } else if (/^6(?:011|5[0-9]{2})[0-9]{12}$/.test(creditCardNumber)) {
-      return VENDOR.DISCOVER;
-    } else if (/^3[47][0-9]{13}$/.test(creditCardNumber)) {  //^6(?:011|5[0-9]{2})[0-9]{12,15}$ 19 digits
-      return VENDOR.AMERICAN_EXPRESS;
-    } else if (/^(603493\d{10}|518902\d{11}|519767\d{10}|537465\d{10})$/.test(creditCardNumber)) {
-      return VENDOR.TARJETA_CENCOSUD;
-    } else if (/^5[1-5][0-9]{14}$/.test(creditCardNumber)) { //^(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)(?:[0-9]{3}){4,5}$ 19 digits
-      return VENDOR.MASTERCARD
+    if (/^409355\d{10}$/.test(creditCardNumber)) {
+      return { name: VENDOR.NEQUI, luhn: false };
+    } else if (/^4(?:[0-9]{12}(?:[0-9]{3})?|0606374[0-9]{10}|[0-9]{12}(?:[0-9]{3}){0,2})$/.test(creditCardNumber)) {
+      return { name: VENDOR.VISA, luhn: true };
+    } else if (/^(?:[35](?:0[0-5]|[68][0-9])[0-9]{11}|30[0-5]{11}|3095\d{10}|36{12}|3[89]\d{12})$/.test(creditCardNumber)) {
+      return { name: VENDOR.DINERS, luhn: true };
+    } else if (/^(?:6(?:011|5[0-9]{2})[0-9]{12}|6011\d{12}|64[4-9]\d{13}|65\d{14})$/.test(creditCardNumber)) {
+      return { name: VENDOR.DISCOVER, luhn: true };
+    } else if (/^(?:3[47]\d{13}|6(?:011|5[0-9]{2})\d{12,15})$/.test(creditCardNumber)) {
+      return { name: VENDOR.AMERICAN_EXPRESS, luhn: true };
+    } else if (/^(603493|519767)(\d{10})$/.test(creditCardNumber)) {
+      return { name: VENDOR.TARJETA_CENCOSUD, luhn: true };
+    } else if (/^(627180|528209)\d{10}$/.test(creditCardNumber)) {
+      return { name: VENDOR.FALABELLA, luhn: false };
+    } else if (/^(?:5[1-5]\d{14}|2(?:2(?:2[1-9]|[3-9]\d)|[3-6]\d\d|7(?:[01]\d|20))\d{12}|(?:5[1-5]\d{2}|222[1-9]|22[3-9]\d|2[3-6]\d{2}|27[01]\d|2720)(?:\d{3}){4,5})$/.test(creditCardNumber)) {
+      return { name: VENDOR.MASTERCARD, luhn: true };
     } else if (/^589562\d{10}$/.test(creditCardNumber)) {
-      return VENDOR.TARJETA_NARANJA
-    } else if (/(^603488(\d{10})$)|(^2799(\d{9})$)/.test(creditCardNumber)) {
-      return VENDOR.SHOPPING; //PRIVATE LABEL
-    } else if (/(^604(([23][0-9][0-9])|(400))(\d{10})$)|(^589657(\d{10})$)/.test(creditCardNumber)) {
-      return VENDOR.CABAL;
-    } else if (/^(5011|5020|5896|6064|6070|6045|6034)\d{12}(?:\d{2})?$/.test(creditCardNumber)) {
-      return VENDOR.ARGENCARD
+      return { name: VENDOR.TARJETA_NARANJA, luhn: false }; // it is estimated that they will comply with the Luhn Algorithm by the second half of 2024
+    } else if (/^(603488\d{10}|2799\d{9})$/.test(creditCardNumber)) {
+      return { name: VENDOR.SHOPPING, luhn: false };
+    } else if (/^(604(([23][0-9][0-9])|(400))\d{10}|589657\d{10})$/.test(creditCardNumber)) {
+      return { name: VENDOR.CABAL, luhn: false };
+    } else if (/^(501105|532362)(\d{10}$)/.test(creditCardNumber)) {
+      return { name: VENDOR.ARGENCARD, luhn: false };
     } else if (/^(3841[046]0|606282|637(5(68|99)|095|6(09|12)))(\d{7}|\d{10}|\d{13})$/.test(creditCardNumber)) {
-      return VENDOR.HIPERCARD;
+      return { name: VENDOR.HIPERCARD, luhn: false };
     } else if (/^590712\d{10}$/.test(creditCardNumber)) {
-      return VENDOR.CODENSA;
-    } else if (/^(541203|540625|549151)(\\d{10})$/.test(creditCardNumber)) {
-      return VENDOR.CREDENCIAL;
-    } else if (/^(4011[67]8|43(1274|8935)|45(1416|7393|763[12])|50(4175|6699|67[0-6]\d|677[0-4])|627780|63(6297|6368)|65(0(0[3-9]|[1-3]\d)|[13-9]\d{2}))\d{10,16}$/.test(creditCardNumber)) { // supports 16, 17, 18 or 19 digits
-      return VENDOR.ELO;
-    } else if (/^(?:2131|1800|35\d{3})\d{11}$/.test(creditCardNumber)) {
-      return VENDOR.JCB;
-    } else if (/\\d{16}$/.test(creditCardNumber)) {
-      return VENDOR.OTHER;
+      return { name: VENDOR.CODENSA, luhn: false };
+    } else if (/^(541203|540625|549151)(\d{10})$/.test(creditCardNumber)) {
+      return { name: VENDOR.CREDENCIAL, luhn: false };
+    } else if (/^(4011[67]8|43(1274|8935)|45(1416|7393|763[12])|50(4175|6699|67[0-6]\d|677[0-4])|627780|63(6297|6368)|65(0(0[3-9]|[1-3]\d)|[13-9]\d{2}))\d{10,16}$/.test(creditCardNumber)) {
+      return { name: VENDOR.ELO, luhn: false };
+    } else if (/^(?:\d{13}|\d{14}|\d{15}|\d{16}|\d{19})$/.test(creditCardNumber)) {
+      return { name: VENDOR.OTHER, luhn: false };
     } else {
-      return VENDOR.UNKNOWN;
+      return { name: VENDOR.UNKNOWN, luhn: false };
     }
   }
 
-  // Validates the card is luhn valid
+  // Validates whether the card is Luhn-valid
   function validateLuhnAlgorithm(creditCardNumber) {
     const reversedNumbers = creditCardNumber.split("").reverse().join("");
     let sum = 0;
@@ -245,22 +239,29 @@
     return sum % 10 === 0;
   }
 
-  function validateDate(creditCardExpirationDate) {
-    // Gets current date
-    const now = new Date();
+  // Validates card expiration date
+  function validateExpirationDate(creditCardExpirationDate) {
+    const now = new Date(); // Gets current date
     now.setHours(0, 0, 0, 0);
+    const inputMonth = parseInt(creditCardExpirationDate.slice(0, 2)); // Gets the month from expiration date
+    const inputYear = parseInt(creditCardExpirationDate.substr(5, 6)); // Gets the year from expiration date
 
-    // Gets month and year from expiration date
-    const inputMonth = parseInt(creditCardExpirationDate.slice(0, 2));
-    const inputYear = parseInt(creditCardExpirationDate.substr(5, 6));
+    // Validation of the month between 01 and 12
+    if (inputMonth < 1 || inputMonth > 12) {
+      return false;
+    }
 
-    // Gets expiration date
-    const inputDate = new Date(inputYear + 2000, inputMonth - 1, 1);
+    // Validation of the year
+    const currentYear = new Date().getFullYear() % 100; // Obtains current year in format YY
+    if (inputYear < currentYear || inputYear > 99) {
+      return false;
+    }
+
+    const inputDate = new Date(inputYear + 2000, inputMonth - 1, 1); // Gets expiration date
     inputDate.setMonth(inputDate.getMonth() + 1);
     inputDate.setDate(inputDate.getDate() - 1);
 
-    // Verifies expiration date
-    if (inputDate < now) {
+    if (inputDate < now) { // Verifies expiration date
       return false;
     } else {
       return true;
@@ -272,7 +273,7 @@
     const cardVendor = detectVendor(creditCardNumber);
     const securityCodeLength = creditCardSecurityCode.replace(/\D/g, "").length;
 
-    if (cardVendor === VENDOR.AMERICAN_EXPRESS) {
+    if (cardVendor.name === VENDOR.AMERICAN_EXPRESS) {
       if (securityCodeLength === 4) {
         return true;
       } else if (securityCodeLength === 3) {
@@ -285,17 +286,17 @@
     return false;
   }
 
-  // Validates the card in general
+  // Validates the card data in general
   function validateCard(creditCardNumber, creditCardExpirationDate, creditCardSecurityCode) {
     const isCardLengthValid = validateCardLength(creditCardNumber);
     const cardVendor = detectVendor(creditCardNumber);
     const isLuhnValid = validateLuhnAlgorithm(creditCardNumber);
-    const isExpDateValid = validateDate(creditCardExpirationDate);
+    const isExpDateValid = validateExpirationDate(creditCardExpirationDate);
     const isSecCodeValid = validateSecurityCode(creditCardNumber, creditCardSecurityCode);
 
-    console.log('Card Vendor: ' + cardVendor);
+    console.log('Card Vendor: ' + cardVendor.name); // For testing :)
 
-    if (cardVendor === VENDOR.TARJETA_NARANJA || cardVendor === VENDOR.ELO || cardVendor === VENDOR.JCB) {
+    if (cardVendor.luhn === false) {
       if (isCardLengthValid && isExpDateValid && isSecCodeValid) {
         return true;
       } else {
@@ -353,7 +354,7 @@
             POS.setEnvironment(""); // SET ENVIRONMENT
             POS.setPublicKey(""); // SET PAYU APP BUSINESS UNIT PUBLIC KEY
 
-            const { billingAddress, shippingAddress } = getAddresses(); // SHIPPING ADDRESS SHOULD BE USE IN CUSTOMER OR PAYMENT RESOURCE
+            const { billingAddress, shippingAddress } = getAddresses();
 
             const javascriptApiData = {
               token_type: document.getElementById("js-api-token-type").value,
@@ -384,7 +385,7 @@
               function showToken(data) {
                 result = JSON.parse(data);
                 // Token Data
-                resolve({ token: result.token, encrypted_cvv: result.encrypted_cvv });
+                resolve({ token: result.token, encrypted_cvv: result.encrypted_cvv, shippingAddress: shippingAddress });
                 // Shows tokenization response for illustration purposes  
                 showMessage(data, "black");
                 // Shows tokenization response for illustration purposes
@@ -417,10 +418,12 @@
     });
   }
 
+  // USE THE TOKEN DATA TO CREATE THE CHARGE/AUTHORIZATION REQUEST
   async function main() {
     try {
-      const { token, encrypted_cvv } = await getTokenAndCvv();
-      console.log(`token: ${token}, encrypted_cvv: ${encrypted_cvv}`);
+      // SHIPPING ADDRESS SHOULD BE USED IN CUSTOMER OR PAYMENT RESOURCE
+      const { token, encrypted_cvv, shippingAddress } = await getTokenAndCvv();
+      console.log(`token: ${token}, encrypted_cvv: ${encrypted_cvv}, shippingAddress: ${shippingAddress}`);
     } catch (error) {
       console.error(error);
     }
@@ -477,26 +480,22 @@
   const countrySelect = document.querySelector("#js-api-document-country");
   const documentSelect = document.querySelector("#js-api-document-type");
 
+  // Generates the document types options
   function generateDocumentOptions(country) {
-    // Vaciar el select actual
-    documentSelect.innerHTML = "";
-
-    // Generar las opciones basadas en el país seleccionado
-    const documentOptions = documents
+    documentSelect.innerHTML = ""; // Clears current select
+    const documentOptions = documents // Generate options based on selected country
       .filter((document) => document.country.includes(country))
       .map((document) => {
         return `<option value="${document.iso}">${document.description}</option>`;
       })
       .join("");
 
-    // Agregar las opciones al select
-    documentSelect.innerHTML = documentOptions;
+    documentSelect.innerHTML = documentOptions; // Adds the options to the select
   }
 
-  // Generar las opciones iniciales
-  generateDocumentOptions(countrySelect.value);
+  generateDocumentOptions(countrySelect.value); // Generates inital options
 
-  // Actualizar las opciones de documentos cuando cambie el país seleccionado
+  // Update options when the country is changed
   countrySelect.addEventListener("change", (event) => {
     generateDocumentOptions(event.target.value);
   });
@@ -507,6 +506,7 @@
 <!-- Addresses -->
 <script>
 
+  // Obtains the addresses entered by the user
   function getAddresses() {
     const sameAddressCheckbox = document.getElementById('same-address');
     const billingAddress = {
@@ -532,7 +532,7 @@
     };
 
     if (sameAddressCheckbox.checked) {
-
+      // If user selects same shipping and billing addresses, values are replicated.
       document.getElementById('js-api-shipping-country').value = billingAddress.country;
       document.getElementById('js-api-shipping-city').value = billingAddress.city;
       document.getElementById('js-api-shipping-line1').value = billingAddress.line1;
@@ -548,14 +548,16 @@
     }
   }
 
+  // Toggles the visibility of the shipping address section based on the value of the "same-address" checkbox.
   function toggleShippingAddress() {
     var checkBox = document.getElementById("same-address");
     var shippingAddress = document.getElementById("shipping-address");
 
     if (checkBox.checked) {
+      // If the checkbox is checked, the shipping address section is hidden.
       shippingAddress.style.display = "none";
     } else {
-
+      // If it is unchecked, the section is shown and the input fields are reset to empty.
       document.getElementById('js-api-shipping-country').value = '';
       document.getElementById('js-api-shipping-city').value = '';
       document.getElementById('js-api-shipping-line1').value = '';
@@ -570,8 +572,10 @@
   }
 </script>
 
-<!-- Addresses -->
+<!-- Form Validation -->
 <script>
+
+  // Validates form fields before submitting
   function validateForm() {
     const documentNumber = document.getElementById('js-api-document-number').value;
     const country = document.getElementById('js-api-billing-country').value;
@@ -626,6 +630,13 @@
 
   h2 {
     text-align: center;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #555;
   }
 
   hr.solid {
@@ -750,8 +761,9 @@
 
 <!-- 
   
-  After create token, you can create a charge or authorization and send the token generated with
-  the secure fields form, consider that it is necessary to create Payment resource first
+  After you create the token, you can use it to capture customer funds.
+  Consider that it is necessary to create Payment resource first.
+  Please read the documentation for more:
 
   Setting Up PaymentsOS
   https://developers.paymentsos.com/docs/getting-started/setting-up-paymentsos.html
@@ -759,13 +771,19 @@
   Providers
   https://developers.paymentsos.com/docs/connect/finding-a-provider.html
 
-  Payment
+  Body Builder Tool
+  https://developers.paymentsos.com/docs/connect/creating-sample-requests.html
+
+  Create Payment
   https://developers.paymentsos.com/docs/flows-and-operations/payment-and-transaction-statuses.html
 
-  Charge
+  Charge Flow
   https://developers.paymentsos.com/docs/flows-and-operations/charge.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Charges
 
-  Authorization and Capture
+  Authorization and Capture Flow
   https://developers.paymentsos.com/docs/flows-and-operations/authorize-capture.html
-
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Authorizations
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Captures
+  
 -->
