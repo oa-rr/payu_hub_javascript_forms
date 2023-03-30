@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Collecting Card Information</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Secure Fields Form js SAQ A-->
+  <script language="JavaScript" type="text/javascript"
+    src="https://js.paymentsos.com/v3/latest/secure-fields.min.js"></script>
+  <!-- Animation -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.all.min.js"></script>
+</head>
+
+<body>
+
+  <input type="hidden" id="credentials" /> <!-- Business unit credentials element -->
+
+  <!-- Secure Fields Form Tab Content -->
+  <div class="panel" id="secure-fields-form">
+    <div>
+      <h2>Secure Fields Form Sample</h2>
+      <p class="subtitle">SAQ A</p>
+    </div>
+    <div>
+      <hr class="solid">
+    </div>
+    <div>
+      <div class="form-container">
+        <form id="secure-fields-form">
+          <input id="ssf-cardholder-name" class="field" placeholder="Cardholder name" />
+
+          <div class="field" id="ssf-card-number"></div>
+
+          <div class="field" id="ssf-exp-date" class="input empty"></div>
+
+          <div class="field" id="ssf-cvv" class="input empty"></div>
+
+          <button class="btn" type="submit" id="ssf-pay-button">Pay</button>
+        </form>
+      </div>
+      <div id="sff-message" class="message"></div>
+    </div>
+  </div>
+
+</body>
+
+
+<!-- Secure Fields Form Script -->
+<script>
+
+  const SSF_FONTS = [{ src: 'https://fonts.googleapis.com/css?family=Tangerine' }];
+  const SSF_DIRECTION_LRT = true;
+  const SSF_LUHN_VALIDATION = true;
+  const SSF_CLASSES = { invalid: "my-own-invalid-class" };
+  const SSF_PLACEHOLDERS = { cardNumber: "0000 0000 0000 0000", expDate: "MM / YY", cvv: "XXX" }
+  const SSF_STYLE = {
+    base: {
+      color: "#333",
+      fontWeight: 600,
+      fontFamily: "Quicksand, Open Sans, Segoe UI, sans-serif",
+      fontSize: "13px",
+      fontSmoothing: "antialiased",
+      ":focus": {
+        color: "#424770",
+      },
+
+      "::placeholder": {
+        color: "#9BACC8",
+      },
+
+      ":focus::placeholder": {
+        color: "#CFD7DF",
+      },
+    },
+    empty: {
+
+    },
+    invalid: {
+
+      color: "#FF0000",
+      ":focus": {
+        color: "#FA755A",
+      },
+      "::placeholder": {
+        color: "#FFCCA5",
+      },
+    },
+    complete: {
+
+    }
+  };
+
+  // Creates Secure Fields Form Elements
+  function createFormElements(publicKey) {
+    const secureFieldsForm = createSecureFieldsForm(publicKey);
+    const cardNumber = createCardNumberField(secureFieldsForm);
+    const expiry = createExpiryField(secureFieldsForm);
+    const cvv = createCvvField(secureFieldsForm);
+
+    const card = { cardNumber: cardNumber, expirationDate: expiry, cvv: cvv };
+
+    return card;
+  }
+
+  // Creates Instance of the Secure Fields Form
+  function createSecureFieldsForm(publicKey) {
+    return new POS.Fields(publicKey, { directionLtr: SSF_DIRECTION_LRT, fonts: SSF_FONTS, luhnValidation: SSF_LUHN_VALIDATION });
+  }
+
+  // Creates card number field
+  function createCardNumberField(secureFieldsForm) {
+    const cardNumber = secureFieldsForm.create("cardNumber", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES, includeCardImage: true });
+    cardNumber.mount("#ssf-card-number");
+    addFieldEventListeners(cardNumber, "card number");
+    return cardNumber;
+  }
+
+  // Creates card expiration date field
+  function createExpiryField(secureFieldsForm) {
+    const expiry = secureFieldsForm.create("creditCardExpiry", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES });
+    expiry.mount("#ssf-exp-date");
+    addFieldEventListeners(expiry, "expiry");
+    return expiry;
+  }
+
+  // Creates cvv field
+  function createCvvField(secureFieldsForm) {
+    const cvv = secureFieldsForm.create("cvv", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES });
+    cvv.mount("#ssf-cvv");
+    addFieldEventListeners(cvv, "cvv");
+    return cvv;
+  }
+
+  // Adds event listeners to the secure form fields
+  function addFieldEventListeners(field, text) {
+    return new Promise((resolve, reject) => {
+      field.on("focus", (focusEvent) => {
+        console.log(`Focus event details: ${JSON.stringify(focusEvent, null, 2)}`);
+        console.log(`${text} field was clicked`);
+      });
+      field.on("change", (changeEvent) => {
+        console.log(`Change event details: ${JSON.stringify(changeEvent, null, 2)}`);
+        console.log(`${text} field changed`);
+      });
+      field.on("blur", (blurEvent) => {
+        console.log(`Blur event details: ${JSON.stringify(changeEvent, null, 2)}`);
+        console.log(`User left ${text} field`);
+        resolve(blurEvent.target.value);
+      });
+    });
+  }
+
+  function validateForm(holderName, cardNumberComplete, expirationDateComplete, cvvComplete) {
+
+    if (holderName == '') {
+      return 'Please enter a valid cardholder name';
+    } else if (cardNumberComplete == false) {
+      return 'Please enter a valid card number';
+    } else if (expirationDateComplete == false) {
+      return 'Please enter a valid card expiration date';
+    } else if (cvvComplete == false) {
+      return 'Please enter a valid card security code';
+    }
+    else {
+      return true;
+    }
+  }
+
+  // Show a message to user
+  function showMessage(message, color) {
+    document.getElementById("sff-message").textContent = message.toString();
+    document.getElementById("sff-message").style.color = color;
+  }
+
+  // Creates tokenization
+  async function getTokenAndCvv() {
+
+    const environment = ''; // SET ENVIRONMENT
+    const publicKey = ''; // SET PAYU APP BUSINESS UNIT PUBLIC KEY
+    const formElements = createFormElements(publicKey);
+
+    return new Promise((resolve, reject) => {
+      document.getElementById('secure-fields-form').addEventListener('submit', async (event) => {
+        event.preventDefault()
+
+        const cardholderValue = document.getElementById("ssf-cardholder-name").value;
+        const cardNumberIsComplete = formElements.cardNumber._elementState.complete;
+        const cardExpirationIsComplete = formElements.expirationDate._elementState.complete;
+        const cardCvvIsComplete = formElements.cvv._elementState.complete;
+
+        const isFormValid = validateForm(cardholderValue, cardNumberIsComplete, cardExpirationIsComplete, cardCvvIsComplete);
+
+        if (isFormValid == true) {
+
+          additionalData = { holder_name: cardholderValue }
+
+          data = await POS.createToken(formElements.cardNumber, { additionalData, environment });
+
+          result = JSON.parse(data);
+
+          resolve({ token: result.token, encrypted_cvv: result.encrypted_cvv });
+
+          // Shows tokenization response for illustration purposes  
+          showMessage(data, "black");
+
+          // Shows tokenization response for illustration purposes
+          Swal.fire({
+            icon: 'success',
+            title: 'Successful request!',
+            text: data,
+            confirmButtonText: 'OK',
+            timer: 10000,
+            timerProgressBar: true,
+            showClass: {
+              popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+              popup: 'animate__animated animate__fadeOutUp'
+            }
+          });
+        } else {
+          // Shows form validation alert
+          showMessage(isFormValid, "red");
+        }
+
+      });
+
+    });
+  }
+
+  // USE THE TOKEN DATA TO CREATE THE CHARGE/AUTHORIZATION REQUEST
+  async function main() {
+    try {
+      const { token, encrypted_cvv } = await getTokenAndCvv(); // TOKEN AND ENCRYPTED CVV
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  main();
+
+</script>
+
+<!-- Page Styling -->
+<style>
+  body {
+    background: linear-gradient(90deg, rgba(235, 242, 247, 1) 0%, rgba(255, 255, 255, 1) 100%);
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  hr.solid {
+    border-top: 3px solid #bbb;
+    margin-bottom: 2em;
+  }
+
+  .panel {
+    margin: 0 auto;
+    max-width: 295px;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    display: block;
+    width: 80%;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    place-content: center;
+  }
+
+  .label {
+    display: flex;
+    width: 100%;
+    margin-bottom: 1em;
+    justify-content: center;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #333;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .field {
+    box-sizing: border-box;
+    line-height: 1.5;
+    font-size: 13px;
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+    border: 2px solid #d9d9d9;
+    color: #333;
+    border: 1px solid #ddd;
+    background-color: #fbfbfd;
+    border-radius: 10px;
+    margin-bottom: 1.5em;
+    margin-top: -0.25em;
+    position: relative;
+    padding: 10px;
+    word-break: break-word;
+    font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
+    opacity: 1;
+  }
+
+  ::placeholder {
+    color: rgb(155, 172, 200);
+    opacity: 1;
+    line-height: 1.5;
+    font-family: sans-serif;
+  }
+
+  .btn {
+    background: linear-gradient(to bottom, #4265af 0%, #00a7a4 100%);
+    color: #fff;
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom-color: rgba(46, 86, 153, 0.4);
+    border-top: 0;
+    border-radius: 10px;
+    font-size: 1.2em;
+    text-shadow: rgba(46, 86, 153, 0.298039) 0px -1px 0px;
+    line-height: 0.5em;
+    -webkit-font-smoothing: antialiased;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.3s ease-in-out;
+    cursor: pointer;
+    letter-spacing: 1px;
+    padding: 1em;
+  }
+
+  .btn:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    transition: none;
+  }
+
+  .message {
+    contain: paint;
+    text-align: center;
+    overflow-wrap: break-word;
+    margin-top: 1em;
+  }
+</style>
+
+</html>
+
+<!-- 
+  
+  After you create the token, you can use it to capture customer funds.
+  Consider that it is necessary to create Payment resource first.
+  Please read the documentation for more:
+
+  Setting Up PaymentsOS
+  https://developers.paymentsos.com/docs/getting-started/setting-up-paymentsos.html
+
+  Providers
+  https://developers.paymentsos.com/docs/connect/finding-a-provider.html
+
+  Body Builder Tool
+  https://developers.paymentsos.com/docs/connect/creating-sample-requests.html
+
+  Create Payment
+  https://developers.paymentsos.com/docs/flows-and-operations/payment-and-transaction-statuses.html
+
+  Charge Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/charge.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Charges
+
+  Authorization and Capture Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/authorize-capture.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Authorizations
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Captures
+  
+-->
