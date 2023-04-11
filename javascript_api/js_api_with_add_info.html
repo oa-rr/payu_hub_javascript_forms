@@ -17,7 +17,7 @@
   <!-- Javascript API Content -->
   <div id="js-api" class="panel">
     <div>
-      <h2>PayU Hub JS API Sample With Additional Info</h2>
+      <h2>PayU Hub JS API Sample With Additional Information</h2>
       <p class="subtitle">SAQ A-EP</p>
     </div>
     <div>
@@ -55,10 +55,18 @@
 
         <div>
           <label class="label" for="documents">Billing Address</label>
-          <input id="js-api-billing-country" class="field" placeholder="Country, i.e. ARG" />
+          <select id="js-api-billing-country" class="field">
+            <option value="ARG">Argentina</option>
+            <option value="BRA">Brazil</option>
+            <option value="CHL">Chile</option>
+            <option value="COL">Colombia</option>
+            <option value="MEX">Mexico</option>
+            <option value="PAN">Panama</option>
+            <option value="PER">Peru</option>
+          </select>
           <input id="js-api-billing-city" class="field" placeholder="City" />
           <input id="js-api-billing-line1" class="field" placeholder="Line1" />
-          <input id="js-api-billing-line2" class="field" placeholder="Line 2" />
+          <input id="js-api-billing-line2" class="field" placeholder="Line 2 - Optional" />
           <input id="js-api-billing-first-name" class="field" placeholder="First Name" />
           <input id="js-api-billing-last-name" class="field" placeholder="Last Name" />
           <input id="js-api-billing-email" class="field" placeholder="Email" inputmode="email" />
@@ -70,7 +78,7 @@
           <label class="label" for="documents">Shipping Address</label>
 
           <div class="checkbox-address">
-            <label for="same-address">Same as Billing Address:</label>
+            <label for="same-address"> Different from the billing address? </label>
             <input type="checkbox" id="same-address" onclick="toggleShippingAddress()">
           </div>
 
@@ -86,7 +94,7 @@
             <input type="text" id="js-api-shipping-line1" class="field" placeholder="Line1">
 
             <label for="shipping-line2"></label>
-            <input type="text" id="js-api-shipping-line2" class="field" placeholder="Line 2">
+            <input type="text" id="js-api-shipping-line2" class="field" placeholder="Line 2 - Optional">
 
             <label for="shipping-first-name"></label>
             <input type="text" id="js-api-shipping-first-name" class="field" placeholder="First Name">
@@ -356,6 +364,9 @@
 
             const { billingAddress, shippingAddress } = getAddresses();
 
+            console.log(billingAddress);
+            console.log(shippingAddress);
+
             const javascriptApiData = {
               token_type: document.getElementById("js-api-token-type").value,
               holder_name: document.getElementById("js-api-cardholder-name").value,
@@ -508,7 +519,7 @@
 
   // Obtains the addresses entered by the user
   function getAddresses() {
-    const sameAddressCheckbox = document.getElementById('same-address');
+    const differentAddressCheckbox = document.getElementById('same-address');
     const billingAddress = {
       country: document.getElementById('js-api-billing-country').value,
       city: document.getElementById('js-api-billing-city').value,
@@ -531,7 +542,7 @@
       phone: document.getElementById('js-api-shipping-phone').value,
     };
 
-    if (sameAddressCheckbox.checked) {
+    if (!differentAddressCheckbox.checked) {
       // If user selects same shipping and billing addresses, values are replicated.
       document.getElementById('js-api-shipping-country').value = billingAddress.country;
       document.getElementById('js-api-shipping-city').value = billingAddress.city;
@@ -548,16 +559,20 @@
     }
   }
 
+  document.addEventListener("DOMContentLoaded", function () {
+    toggleShippingAddress(); // is called after the page has finished loading
+  });
+
   // Toggles the visibility of the shipping address section based on the value of the "same-address" checkbox.
   function toggleShippingAddress() {
-    var checkBox = document.getElementById("same-address");
+    var differentAddressCheckbox = document.getElementById("same-address");
     var shippingAddress = document.getElementById("shipping-address");
 
-    if (checkBox.checked) {
-      // If the checkbox is checked, the shipping address section is hidden.
-      shippingAddress.style.display = "none";
-    } else {
-      // If it is unchecked, the section is shown and the input fields are reset to empty.
+    // Hide the shipping address section by default
+    shippingAddress.style.display = "none";
+
+    if (differentAddressCheckbox.checked) {
+      // If it is checked, the section is unhidden and the input fields are reset to empty.
       document.getElementById('js-api-shipping-country').value = '';
       document.getElementById('js-api-shipping-city').value = '';
       document.getElementById('js-api-shipping-line1').value = '';
@@ -565,9 +580,12 @@
       document.getElementById('js-api-shipping-first-name').value = '';
       document.getElementById('js-api-shipping-last-name').value = '';
       document.getElementById('js-api-shipping-email').value = '';
-      document.getElementById('js-api-shipping-phone').value = ''
-
+      document.getElementById('js-api-shipping-phone').value = '';
+      // If the checkbox is checked, show the shipping address section.
       shippingAddress.style.display = "block";
+
+    } else {
+      shippingAddress.style.display = "none";
     }
   }
 </script>
