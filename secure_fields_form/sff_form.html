@@ -33,9 +33,9 @@
 
           <div class="field" id="ssf-card-number"></div>
 
-          <div class="field" id="ssf-exp-date" class="input empty"></div>
+          <div class="field" id="ssf-exp-date"></div>
 
-          <div class="field" id="ssf-cvv" class="input empty"></div>
+          <div class="field" id="ssf-cvv"></div>
 
           <button class="btn" type="submit" id="ssf-pay-button">Pay</button>
         </form>
@@ -295,6 +295,12 @@
     margin: 0 auto;
   }
 
+  #ssf-card-number iframe{
+    display: flex;
+    align-items: center;
+    height: auto;
+  }
+
   .field {
     box-sizing: border-box;
     line-height: 1.5;
@@ -314,6 +320,7 @@
     word-break: break-word;
     font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
     opacity: 1;
+    height: 42px;
   }
 
   ::placeholder {
