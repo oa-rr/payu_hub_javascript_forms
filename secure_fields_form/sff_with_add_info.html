@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Collecting Card Information</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Secure Fields Form js SAQ A-->
+  <script language="JavaScript" type="text/javascript"
+    src="https://js.paymentsos.com/v3/latest/secure-fields.min.js"></script>
+  <!-- Animation -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.all.min.js"></script>
+</head>
+
+<body>
+
+  <input type="hidden" id="credentials" /> <!-- Business unit credentials element -->
+
+  <!-- Secure Fields Form Tab Content -->
+  <div class="panel" id="secure-fields-form">
+    <div>
+      <h2>Secure Fields Form Sample With Additional Information</h2>
+      <p class="subtitle">SAQ A</p>
+    </div>
+    <div>
+      <hr class="solid">
+    </div>
+    <div>
+      <div class="form-container">
+        <form id="secure-fields-form">
+
+          <label class="label">Document Identity</label>
+
+          <div>
+            <label for="country"></label>
+            <select id="sff-document-country" class="field">
+              <option value="Argentina">Argentina</option>
+              <option value="Brazil">Brazil</option>
+              <option value="Chile">Chile</option>
+              <option value="Colombia">Colombia</option>
+              <option value="Mexico">Mexico</option>
+              <option value="Peru">Peru</option>
+              <option value="Other">Others</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="documents"></label>
+            <select id="sff-document-type" class="field">
+              <option value="CC">Citizenship card</option>
+            </select>
+          </div>
+
+          <div>
+            <input id="sff-document-number" class="field" placeholder="Document number" />
+          </div>
+
+          <div>
+            <label class="label" for="documents">Billing Address</label>
+            <select id="sff-billing-country" class="field">
+              <option value="ARG">Argentina</option>
+              <option value="BRA">Brazil</option>
+              <option value="CHL">Chile</option>
+              <option value="COL">Colombia</option>
+              <option value="MEX">Mexico</option>
+              <option value="PAN">Panama</option>
+              <option value="PER">Peru</option>
+            </select>
+            <input id="sff-billing-city" class="field" placeholder="City" />
+            <input id="sff-billing-line1" class="field" placeholder="Line1" />
+            <input id="sff-billing-line2" class="field" placeholder="Line 2 - Optional" />
+            <input id="sff-billing-first-name" class="field" placeholder="First Name" />
+            <input id="sff-billing-last-name" class="field" placeholder="Last Name" />
+            <input id="sff-billing-email" class="field" placeholder="Email" inputmode="email" />
+            <input id="sff-billing-phone" class="field" placeholder="Phone" type="number" />
+          </div>
+
+          <div>
+
+            <label class="label" for="documents">Shipping Address</label>
+
+            <div class="checkbox-address">
+              <label for="same-address"> Different from the billing address? </label>
+              <input type="checkbox" id="same-address" onclick="toggleShippingAddress()">
+            </div>
+
+            <div id="shipping-address">
+
+              <label for="shipping-country"></label>
+              <input type="text" id="sff-shipping-country" class="field" placeholder="Country">
+
+              <label for="shipping-city"></label>
+              <input type="text" id="sff-shipping-city" class="field" placeholder="City">
+
+              <label for="shipping-line1"></label>
+              <input type="text" id="sff-shipping-line1" class="field" placeholder="Line1">
+
+              <label for="shipping-line2"></label>
+              <input type="text" id="sff-shipping-line2" class="field" placeholder="Line 2 - Optional">
+
+              <label for="shipping-first-name"></label>
+              <input type="text" id="sff-shipping-first-name" class="field" placeholder="First Name">
+
+              <label for="shipping-last-name"></label>
+              <input type="text" id="sff-shipping-last-name" class="field" placeholder="Last Name">
+
+              <label for="shipping-email"></label>
+              <input type="email" id="sff-shipping-email" class="field" placeholder="Email">
+
+              <label for="shipping-phone"></label>
+              <input type="number" id="sff-shipping-phone" class="field" placeholder="Phone">
+
+
+            </div>
+          </div>
+
+          <label class="label" for="documents">Card Information</label>
+
+          <input id="sff-cardholder-name" class="field" placeholder="Cardholder name" />
+
+          <div class="field" id="sff-card-number"></div>
+
+          <div class="field" id="sff-exp-date" class="input empty"></div>
+
+          <div class="field" id="sff-cvv" class="input empty"></div>
+
+          <button class="btn" type="submit" id="sff-pay-button">Pay</button>
+        </form>
+      </div>
+      <div id="sff-message" class="message"></div>
+    </div>
+  </div>
+
+</body>
+
+
+<!-- Secure Fields Form Script -->
+<script>
+
+  const SSF_FONTS = [{ src: 'https://fonts.googleapis.com/css?family=Tangerine' }];
+  const SSF_DIRECTION_LRT = true;
+  const SSF_LUHN_VALIDATION = false;
+  const SSF_CLASSES = { invalid: "my-own-invalid-class" };
+  const SSF_PLACEHOLDERS = { cardNumber: "0000 0000 0000 0000", expDate: "MM / YY", cvv: "XXX" }
+  const SSF_STYLE = {
+    base: {
+      color: "#333",
+      fontWeight: 600,
+      fontFamily: "Quicksand, Open Sans, Segoe UI, sans-serif",
+      fontSize: "13px",
+      fontSmoothing: "antialiased",
+      ":focus": {
+        color: "#424770",
+      },
+
+      "::placeholder": {
+        color: "#9BACC8",
+      },
+
+      ":focus::placeholder": {
+        color: "#CFD7DF",
+      },
+    },
+    empty: {
+
+    },
+    invalid: {
+
+      color: "#FF0000",
+      ":focus": {
+        color: "#FA755A",
+      },
+      "::placeholder": {
+        color: "#FFCCA5",
+      },
+    },
+    complete: {
+
+    }
+  };
+
+  // Creates Secure Fields Form Elements
+  function createFormElements(publicKey) {
+    const secureFieldsForm = createSecureFieldsForm(publicKey);
+    const cardNumber = createCardNumberField(secureFieldsForm);
+    const expiry = createExpiryField(secureFieldsForm);
+    const cvv = createCvvField(secureFieldsForm);
+
+    const card = { cardNumber: cardNumber, expirationDate: expiry, cvv: cvv };
+
+    return card;
+  }
+
+  // Creates Instance of the Secure Fields Form
+  function createSecureFieldsForm(publicKey) {
+    return new POS.Fields(publicKey, { directionLtr: SSF_DIRECTION_LRT, fonts: SSF_FONTS, luhnValidation: SSF_LUHN_VALIDATION });
+  }
+
+  // Creates card number field
+  function createCardNumberField(secureFieldsForm) {
+    const cardNumber = secureFieldsForm.create("cardNumber", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES, includeCardImage: true });
+    cardNumber.mount("#sff-card-number");
+    addFieldEventListeners(cardNumber, "card number");
+    return cardNumber;
+  }
+
+  // Creates card expiration date field
+  function createExpiryField(secureFieldsForm) {
+    const expiry = secureFieldsForm.create("creditCardExpiry", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES });
+    expiry.mount("#sff-exp-date");
+    addFieldEventListeners(expiry, "expiry");
+    return expiry;
+  }
+
+  // Creates cvv field
+  function createCvvField(secureFieldsForm) {
+    const cvv = secureFieldsForm.create("cvv", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES });
+    cvv.mount("#sff-cvv");
+    addFieldEventListeners(cvv, "cvv");
+    return cvv;
+  }
+
+  // Adds event listeners to the secure form fields
+  function addFieldEventListeners(field, text) {
+    return new Promise((resolve, reject) => {
+      field.on("focus", (focusEvent) => {
+        console.log(`Focus event details: ${JSON.stringify(focusEvent, null, 2)}`);
+        console.log(`${text} field was clicked`);
+      });
+      field.on("change", (changeEvent) => {
+        console.log(`Change event details: ${JSON.stringify(changeEvent, null, 2)}`);
+        console.log(`${text} field changed`);
+      });
+      field.on("blur", (blurEvent) => {
+        console.log(`Blur event details: ${JSON.stringify(changeEvent, null, 2)}`);
+        console.log(`User left ${text} field`);
+        resolve(blurEvent.target.value);
+      });
+    });
+  }
+
+  // Creates tokenization
+  async function getTokenAndCvv() {
+
+    const environment = ''; // SET ENVIRONMENT
+    const publicKey = ''; // SET PAYU APP BUSINESS UNIT PUBLIC KEY
+    const formElements = createFormElements(publicKey);
+
+    return new Promise((resolve, reject) => {
+      document.getElementById('secure-fields-form').addEventListener('submit', async (event) => {
+        event.preventDefault()
+
+        const cardholderValue = document.getElementById("sff-cardholder-name").value;
+        const cardNumberIsComplete = formElements.cardNumber._elementState.complete;
+        const cardExpirationIsComplete = formElements.expirationDate._elementState.complete;
+        const cardCvvIsComplete = formElements.cvv._elementState.complete;
+
+        const isFormValid = validateForm(cardholderValue, cardNumberIsComplete, cardExpirationIsComplete, cardCvvIsComplete);
+
+        if (isFormValid == true) {
+
+          const { billingAddress, shippingAddress } = getAddresses();
+
+          const additionalData = {
+            holder_name: cardholderValue,
+            identity_document: {
+              number: document.getElementById("sff-document-number").value,
+              type: document.getElementById("sff-document-type").value
+            },
+            billing_address: {
+              country: billingAddress.country,
+              city: billingAddress.city,
+              line1: billingAddress.line1,
+              line2: billingAddress.line2,
+              first_name: billingAddress.first_name,
+              last_name: billingAddress.last_name,
+              email: billingAddress.email,
+              phone: billingAddress.phone
+            }
+          };
+
+          data = await POS.createToken(formElements.cardNumber, { additionalData, environment });
+
+          result = JSON.parse(data);
+
+          resolve({ token: result.token, encrypted_cvv: result.encrypted_cvv });
+
+          // Shows tokenization response for illustration purposes  
+          showMessage(data, "black");
+
+          // Shows tokenization response for illustration purposes
+          Swal.fire({
+            icon: 'success',
+            title: 'Successful request!',
+            text: data,
+            confirmButtonText: 'OK',
+            timer: 10000,
+            timerProgressBar: true,
+            showClass: {
+              popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+              popup: 'animate__animated animate__fadeOutUp'
+            }
+          });
+        } else {
+          // Shows form validation alert
+          showMessage(isFormValid, "red");
+        }
+
+      });
+
+    });
+  }
+
+  // USE THE TOKEN DATA TO CREATE THE CHARGE/AUTHORIZATION REQUEST
+  async function main() {
+    try {
+      const { token, encrypted_cvv } = await getTokenAndCvv(); // TOKEN AND ENCRYPTED CVV
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  main();
+
+</script>
+
+<!-- Documents -->
+<script>
+
+  const documents = [
+    { iso: "CC", description: "Citizenship card", country: "Colombia" },
+    { iso: "CE", description: "Foreign citizenship card", country: "Colombia, Peru" },
+    { iso: "CEL", description: "When identified by the mobile line", country: "Colombia" },
+    { iso: "CEP", description: "Electronic Payment Receipt", country: "Mexico" },
+    { iso: "CI", description: "Identity Card", country: "Argentina, Chile" },
+    { iso: "CNPJ", description: "National Register of Legal Entities", country: "Brazil" }, // Valid format XXXXXXXXXXXXXX
+    { iso: "CPF", description: "Registration of Individuals", country: "Brazil" }, // Valid format XXX.XXX.XXX-XX
+    { iso: "CUIL", description: "Unique Labor Identification Code", country: "Argentina" },
+    { iso: "CUIT", description: "Single Tax identification", country: "Argentina" },
+    { iso: "CURP", description: "Unique Population Registry Code", country: "Mexico" },
+    { iso: "DE", description: "Foreing Identifiaction Number", country: "Peru" },
+    { iso: "DL", description: "Driver License", country: "Other" },
+    { iso: "DNI", description: "National Identity Document", country: "Argentina, Peru, Chile" },
+    { iso: "DNIE", description: "National Identity Document - Electronical", country: "Argentina, Peru, Chile" },
+    { iso: "EIN", description: "Employer Identification Number", country: "Peru" },
+    { iso: "ID", description: "Identification", country: "Other" },
+    { iso: "IDC", description: "Client´s unique identifier, in the case of unique customer / utility consumer ID’s.", country: "Other" },
+    { iso: "IFE", description: "Federal Electoral Institute", country: "Mexico" },
+    { iso: "LC", description: "Civic Notebook", country: "Argentina" },
+    { iso: "LE", description: "Book enlistment", country: "Argentina" },
+    { iso: "NIF", description: "Tax identification number", country: "Other" },
+    { iso: "NIT", description: "Tax identification number", country: "Colombia" },
+    { iso: "PP", description: "Passport", country: "Other" },
+    { iso: "RC", description: "Birth certificate", country: "Colombia" },
+    { iso: "RDE", description: "RDE document type", country: "Other" },
+    { iso: "RE", description: "RE document type", country: "Other" },
+    { iso: "RFC", description: "Federal taxpayer registry", country: "Mexico" },
+    { iso: "RIF", description: "Tax Information Registry", country: "Other" },
+    { iso: "RM", description: "Commercial Register", country: "Other" },
+    { iso: "RMC", description: "Consular Registration", country: "Other" },
+    { iso: "RNC", description: "National Taxpayers Registry", country: "Other" },
+    { iso: "RUC", description: "Unique Taxpayer Registration", country: "Peru" },
+    { iso: "RUN", description: "Unique National Role", country: "Chile" },
+    { iso: "RUT", description: "Unique Tributary Role", country: "Chile" },
+    { iso: "SC", description: "Safe Passage", country: "Other" },
+    { iso: "SIEM", description: "Mexican Business Information System", country: "Mexico" },
+    { iso: "SSN", description: "Social Security Number", country: "Other" },
+    { iso: "TI", description: "Identity Card", country: "Colombia" }
+  ];
+
+  const countrySelect = document.querySelector("#sff-document-country");
+  const documentSelect = document.querySelector("#sff-document-type");
+
+  // Generates the document types options
+  function generateDocumentOptions(country) {
+    documentSelect.innerHTML = ""; // Clears current select
+    const documentOptions = documents // Generate options based on selected country
+      .filter((document) => document.country.includes(country))
+      .map((document) => {
+        return `<option value="${document.iso}">${document.description}</option>`;
+      })
+      .join("");
+
+    documentSelect.innerHTML = documentOptions; // Adds the options to the select
+  }
+
+  generateDocumentOptions(countrySelect.value); // Generates inital options
+
+  // Update options when the country is changed
+  countrySelect.addEventListener("change", (event) => {
+    generateDocumentOptions(event.target.value);
+  });
+
+</script>
+
+
+<!-- Addresses -->
+<script>
+
+  // Obtains the addresses entered by the user
+  function getAddresses() {
+    const differentAddressCheckbox = document.getElementById('same-address');
+    const billingAddress = {
+      country: document.getElementById('sff-billing-country').value,
+      city: document.getElementById('sff-billing-city').value,
+      line1: document.getElementById('sff-billing-line1').value,
+      line2: document.getElementById('sff-billing-line2').value,
+      firstName: document.getElementById('sff-billing-first-name').value,
+      lastName: document.getElementById('sff-billing-last-name').value,
+      email: document.getElementById('sff-billing-email').value,
+      phone: document.getElementById('sff-billing-phone').value,
+    };
+
+    const shippingAddress = {
+      country: document.getElementById('sff-shipping-country').value,
+      city: document.getElementById('sff-shipping-city').value,
+      line1: document.getElementById('sff-shipping-line1').value,
+      line2: document.getElementById('sff-shipping-line2').value,
+      firstName: document.getElementById('sff-shipping-first-name').value,
+      lastName: document.getElementById('sff-shipping-last-name').value,
+      email: document.getElementById('sff-shipping-email').value,
+      phone: document.getElementById('sff-shipping-phone').value,
+    };
+
+    if (!differentAddressCheckbox.checked) {
+      // If user selects same shipping and billing addresses, values are replicated.
+      document.getElementById('sff-shipping-country').value = billingAddress.country;
+      document.getElementById('sff-shipping-city').value = billingAddress.city;
+      document.getElementById('sff-shipping-line1').value = billingAddress.line1;
+      document.getElementById('sff-shipping-line2').value = billingAddress.line2;
+      document.getElementById('sff-shipping-first-name').value = billingAddress.firstName;
+      document.getElementById('sff-shipping-last-name').value = billingAddress.lastName;
+      document.getElementById('sff-shipping-email').value = billingAddress.email;
+      document.getElementById('sff-shipping-phone').value = billingAddress.phone;
+
+      return { billingAddress, shippingAddress: billingAddress };
+    } else {
+      return { billingAddress, shippingAddress };
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    toggleShippingAddress(); // is called after the page has finished loading
+  });
+
+  // Toggles the visibility of the shipping address section based on the value of the "same-address" checkbox.
+  function toggleShippingAddress() {
+    var differentAddressCheckbox = document.getElementById("same-address");
+    var shippingAddress = document.getElementById("shipping-address");
+
+    // Hide the shipping address section by default
+    shippingAddress.style.display = "none";
+
+    if (differentAddressCheckbox.checked) {
+      // If it is checked, the section is unhidden and the input fields are reset to empty.
+      document.getElementById('sff-shipping-country').value = '';
+      document.getElementById('sff-shipping-city').value = '';
+      document.getElementById('sff-shipping-line1').value = '';
+      document.getElementById('sff-shipping-line2').value = '';
+      document.getElementById('sff-shipping-first-name').value = '';
+      document.getElementById('sff-shipping-last-name').value = '';
+      document.getElementById('sff-shipping-email').value = '';
+      document.getElementById('sff-shipping-phone').value = '';
+      // If the checkbox is checked, show the shipping address section.
+      shippingAddress.style.display = "block";
+
+    } else {
+      shippingAddress.style.display = "none";
+    }
+  }
+</script>
+
+<!-- Form Validation -->
+<script>
+  function validateForm(holderName, cardNumberComplete, expirationDateComplete, cvvComplete) {
+
+    const documentNumber = document.getElementById('sff-document-number').value;
+    const country = document.getElementById('sff-billing-country').value;
+    const city = document.getElementById('sff-billing-city').value;
+    const line1 = document.getElementById('sff-billing-line1').value;
+    const line2 = document.getElementById('sff-billing-line2').value;
+    const firstName = document.getElementById('sff-billing-first-name').value;
+    const lastName = document.getElementById('sff-billing-last-name').value;
+    const email = document.getElementById('sff-billing-email').value;
+    const phone = document.getElementById('sff-billing-phone').value;
+
+    if (documentNumber == '') {
+      return 'Please enter document number';
+    } else if (country == '') {
+      return 'Please enter billing country';
+    } else if (city == '') {
+      return 'Please enter billing city';
+    } else if (line1 == '') {
+      return 'Please enter billing address line 1';
+    } else if (firstName == '') {
+      return 'Please enter billing first name';
+    } else if (lastName == '') {
+      return 'Please enter billing last name';
+    } else if (email == '') {
+      return 'Please enter billing email';
+    } else if (phone == '') {
+      return 'Please enter billing phone';
+    } else if (holderName == '') {
+      return 'Please enter a valid cardholder name';
+    } else if (cardNumberComplete == false) {
+      return 'Please enter a valid card number';
+    } else if (expirationDateComplete == false) {
+      return 'Please enter a valid card expiration date';
+    } else if (cvvComplete == false) {
+      return 'Please enter a valid card security code';
+    }
+    else {
+      return true;
+    }
+  }
+
+  // Show a message to user
+  function showMessage(message, color) {
+    document.getElementById("sff-message").textContent = message.toString();
+    document.getElementById("sff-message").style.color = color;
+  }
+
+</script>
+
+<!-- Page Styling -->
+<style>
+  body {
+    background: linear-gradient(90deg, rgba(235, 242, 247, 1) 0%, rgba(255, 255, 255, 1) 100%);
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  hr.solid {
+    border-top: 3px solid #bbb;
+    margin-bottom: 1em;
+  }
+
+  .panel {
+    margin: 0 auto;
+    max-width: 500px;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    display: block;
+    width: 80%;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    place-content: center;
+  }
+
+  .label {
+    display: flex;
+    width: 100%;
+    margin-bottom: 1em;
+    justify-content: center;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #333;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .field {
+    box-sizing: border-box;
+    line-height: 1.5;
+    font-size: 13px;
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+    border: 2px solid #d9d9d9;
+    color: #333;
+    border: 1px solid #ddd;
+    background-color: #fbfbfd;
+    border-radius: 10px;
+    margin-bottom: 1.5em;
+    margin-top: -0.25em;
+    position: relative;
+    padding: 10px;
+    word-break: break-word;
+    font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
+    opacity: 1;
+  }
+
+  ::placeholder {
+    color: rgb(155, 172, 200);
+    opacity: 1;
+    line-height: 1.5;
+    font-family: sans-serif;
+  }
+
+  .checkbox-address {
+    box-sizing: border-box;
+    line-height: 1.5;
+    font-size: 13px;
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+    margin-bottom: 1.5em;
+    margin-top: -0.25em;
+    position: relative;
+    padding: 10px;
+    word-break: break-word;
+    font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
+    opacity: 1;
+  }
+
+  .btn {
+    background: linear-gradient(to bottom, #4265af 0%, #00a7a4 100%);
+    color: #fff;
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom-color: rgba(46, 86, 153, 0.4);
+    border-top: 0;
+    border-radius: 10px;
+    font-size: 1.2em;
+    text-shadow: rgba(46, 86, 153, 0.298039) 0px -1px 0px;
+    line-height: 0.5em;
+    -webkit-font-smoothing: antialiased;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.3s ease-in-out;
+    cursor: pointer;
+    letter-spacing: 1px;
+    padding: 1em;
+  }
+
+  .btn:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    transition: none;
+  }
+
+  .message {
+    contain: paint;
+    text-align: center;
+    overflow-wrap: break-word;
+    margin-top: 1em;
+  }
+</style>
+
+</html>
+
+<!-- 
+  
+  After you create the token, you can use it to capture customer funds.
+  Consider that it is necessary to create Payment resource first.
+  Please read the documentation for more:
+
+  Setting Up PaymentsOS
+  https://developers.paymentsos.com/docs/getting-started/setting-up-paymentsos.html
+
+  Providers
+  https://developers.paymentsos.com/docs/connect/finding-a-provider.html
+
+  Body Builder Tool
+  https://developers.paymentsos.com/docs/connect/creating-sample-requests.html
+
+  Create Payment
+  https://developers.paymentsos.com/docs/flows-and-operations/payment-and-transaction-statuses.html
+
+  Charge Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/charge.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Charges
+
+  Authorization and Capture Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/authorize-capture.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Authorizations
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Captures
+  
+-->
