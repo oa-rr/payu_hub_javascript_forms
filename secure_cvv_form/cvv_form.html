@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Collecting Card Information</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Secure Code Form -->
+    <script language="JavaScript" type="text/javascript"
+        src="https://js.paymentsos.com/cvv/latest/cvv-encryptor.min.js"></script>
+    <!-- Animation -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.all.min.js"></script>
+</head>
+
+<body>
+
+    <!-- Secure CVV Form Content -->
+    <div id="js-api" class="panel">
+        <div>
+            <h2>Secure CVV Form Sample</h2>
+            <p class="description">Enter the previously generated token from the card.</p>
+        </div>
+        <div>
+            <hr class="solid">
+        </div>
+        <div class="form-container">
+            <form id="cvv-form">
+
+                <input id="cvv-token-type" type="hidden" value="card_cvv_code">
+
+                <input id="card-token" class="field" placeholder="Token of the payment method."
+                    oninput="hideTokenField()" />
+
+                <div id="cvv-field" class="field"><!-- The form will be displayed here --></div>
+
+                <button class="btn" type="submit" id="cvv-ok-button">Ok</button>
+
+            </form>
+        </div>
+        <div id="cvv-message" class="message"></div>
+    </div>
+
+</body>
+
+<script>
+
+    // Set your environment. Values are either "test" or "live". If omitted, the test environment will be used.
+    function setCredentials() {
+        POSC.setEnvironment("test"); // environment
+        POSC.setPublicKey("") // public key
+    }
+
+    // Make sure to use camelCase for the style attributes
+    const STYLE = {
+        base: {
+            border: 'none',
+            backgroundColor: 'transparent',
+            height: 'auto',
+            width: 'auto',
+            fontSize: 13,
+        },
+        cvv: {
+            width: 'auto',
+            hheight: 'auto',
+        }
+    }
+
+    // Set style to cvv code
+    function setCvvFieldStyle() {
+        POSC.setStyle(STYLE);
+    }
+
+    // Initialize the secure code field
+    function initCvv() {
+        // Set the field's placeholder
+        POSC.setSecurityNumberPlaceholder("CVV");
+        // Now initialize the field
+        return POSC.initCvvEncryptor('cvv-field');
+    }
+
+    // Hides the token field after user enters token value
+    function hideTokenField() {
+        var tokenField = document.getElementById("card-token");
+        if (tokenField.value.length > 0) {
+            tokenField.style.display = "none";
+        }
+    }
+
+    // Sets the token that belongs to the payment method that your customer chose to use
+    function setPaymentMethodToken(cardToken) {
+        return POSC.setPaymentToken(cardToken);
+
+    }
+
+    // Validates form
+    function validateForm(cardToken, cardSecurityCode) {
+        if (cardToken == '') {
+            return 'Please enter a card token';
+        } else if (cardSecurityCode == '') {
+            return 'Please enter a card security code'
+        } else {
+            return true;
+        }
+    }
+
+    // Get secure cvv token
+    function createToken(callback) {
+        POSC.createToken(callback);
+    }
+
+    // Show a message to user
+    function showMessage(message, color) {
+        document.getElementById("cvv-message").textContent = message.toString();
+        document.getElementById("cvv-message").style.color = color;
+    }
+
+    // Generates encrypted CVV, valid for three hours
+    async function getTokenAndCvv() {
+
+        const credentials = setCredentials();
+        const cvvStyle = setCvvFieldStyle();
+        const cvv = initCvv();
+
+        return new Promise((resolve, reject) => {
+            document.getElementById('cvv-form').addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const cardToken = document.getElementById("card-token").value;
+                const cardSecurityCode = document.getElementById("cvv-field").value;
+                const isFormValid = validateForm(cardToken, cardSecurityCode);
+
+                if (isFormValid == true) {
+
+                    const token = setPaymentMethodToken(cardToken);
+                    const cvv = initCvv(cardSecurityCode);
+
+                    await createToken(function showToken(data) {
+                        result = JSON.parse(data);
+                        // Token Data
+                        resolve({ token: result.token, encrypted_cvv: result.encrypted_cvv });
+                        // Shows tokenization response for illustration purposes  
+                        showMessage(data, "black");
+                        // Shows tokenization response for illustration purposes
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Successful request!',
+                            text: data,
+                            confirmButtonText: 'OK',
+                            timer: 10000,
+                            timerProgressBar: true,
+                            showClass: {
+                                popup: 'animate__animated animate__fadeInDown'
+                            },
+                            hideClass: {
+                                popup: 'animate__animated animate__fadeOutUp'
+                            }
+                        });
+                    });
+
+                } else {
+                    // Shows form validation alert
+                    showMessage(isFormValid, "red");
+                }
+            });
+        });
+    }
+
+    // USE THE TOKEN DATA TO CREATE THE CHARGE/AUTHORIZATION REQUEST
+    async function main() {
+        try {
+            const { encrypted_cvv } = await getTokenAndCvv(); // TOKEN AND ENCRYPTED CVV
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    main();
+
+</script>
+
+<!-- Page Styling -->
+<style>
+    body {
+        background: linear-gradient(90deg, rgba(235, 242, 247, 1) 0%, rgba(255, 255, 255, 1) 100%);
+    }
+
+    h2 {
+        text-align: center;
+    }
+
+    .subtitle {
+        text-align: center;
+        font-size: 15px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    p {
+        text-align: -webkit-center;
+    }
+
+    hr.solid {
+        border-top: 3px solid #bbb;
+        margin-bottom: 2em;
+    }
+
+    .panel {
+        margin: 0 auto;
+        max-width: 299px;
+        background-color: white;
+        border: 1px solid #ddd;
+        padding: 20px;
+        display: block;
+        width: 80%;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        place-content: center;
+    }
+
+    .label {
+        display: flex;
+        width: 100%;
+        margin-bottom: 1em;
+        justify-content: center;
+        font-size: 1.2em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #333;
+    }
+
+    .form-container {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .field {
+        box-sizing: border-box;
+        line-height: 1.5;
+        font-size: 13px;
+        width: 100%;
+        text-align: left;
+        justify-content: space-between;
+        border: 2px solid #d9d9d9;
+        color: #333;
+        border: 1px solid #ddd;
+        background-color: #fbfbfd;
+        border-radius: 10px;
+        margin-bottom: 1.5em;
+        margin-top: -0.25em;
+        position: relative;
+        padding: 10px;
+        word-break: break-word;
+        font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
+        opacity: 1;
+        height: 42px;
+    }
+
+    ::placeholder {
+        color: rgb(155, 172, 200);
+        opacity: 1;
+        line-height: 1.5;
+        font-family: sans-serif;
+    }
+
+    .btn {
+        background: linear-gradient(to bottom, #4265af 0%, #00a7a4 100%);
+        color: #fff;
+        display: block;
+        width: 100%;
+        border: none;
+        border-bottom-color: rgba(46, 86, 153, 0.4);
+        border-top: 0;
+        border-radius: 10px;
+        font-size: 1.2em;
+        text-shadow: rgba(46, 86, 153, 0.298039) 0px -1px 0px;
+        line-height: 0.5em;
+        -webkit-font-smoothing: antialiased;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        transition: box-shadow 0.3s ease-in-out;
+        cursor: pointer;
+        letter-spacing: 1px;
+        padding: 1em;
+    }
+
+    .btn:hover {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        transition: none;
+    }
+
+    .message {
+        contain: paint;
+        text-align: center;
+        overflow-wrap: break-word;
+        margin-top: 1em;
+    }
+</style>
+
+</html>
+
+<!-- 
+  
+  After you create the token, you can use it to capture customer funds.
+  Consider that it is necessary to create Payment resource first.
+  Please read the documentation for more:
+
+  Setting Up PaymentsOS
+  https://developers.paymentsos.com/docs/getting-started/setting-up-paymentsos.html
+
+  Providers
+  https://developers.paymentsos.com/docs/connect/finding-a-provider.html
+
+  Body Builder Tool
+  https://developers.paymentsos.com/docs/connect/creating-sample-requests.html
+
+  Create Payment
+  https://developers.paymentsos.com/docs/flows-and-operations/payment-and-transaction-statuses.html
+
+  Charge Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/charge.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Charges
+
+  Authorization and Capture Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/authorize-capture.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Authorizations
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Captures
+  
+-->
