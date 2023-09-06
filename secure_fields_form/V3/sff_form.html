@@ -14,13 +14,10 @@
 </head>
 
 <body>
-
-  <input type="hidden" id="credentials" /> <!-- Business unit credentials element -->
-
   <!-- Secure Fields Form Tab Content -->
   <div class="panel" id="secure-fields-form">
     <div>
-      <h2>Secure Fields Form Sample</h2>
+      <h2>Secure Fields Form Sample V3</h2>
       <p class="subtitle">SAQ A</p>
     </div>
     <div>
@@ -29,6 +26,7 @@
     <div>
       <div class="form-container">
         <form id="secure-fields-form">
+
           <input id="ssf-cardholder-name" class="field" placeholder="Cardholder name" />
 
           <div class="field" id="ssf-card-number"></div>
@@ -37,7 +35,7 @@
 
           <div class="field" id="ssf-cvv"></div>
 
-          <button class="btn" type="submit" id="ssf-pay-button">Pay</button>
+          <button class="btn" type="submit" id="ssf-pay-button">Generate Token</button>
         </form>
       </div>
       <div id="sff-message" class="message"></div>
@@ -194,7 +192,9 @@
 
         if (isFormValid == true) {
 
-          additionalData = { holder_name: cardholderValue }
+          additionalData = {
+            holder_name: cardholderValue
+          }
 
           data = await POS.createToken(formElements.cardNumber, { additionalData, environment });
 
@@ -295,7 +295,7 @@
     margin: 0 auto;
   }
 
-  #ssf-card-number iframe{
+  #ssf-card-number iframe {
     display: flex;
     align-items: center;
     height: auto;

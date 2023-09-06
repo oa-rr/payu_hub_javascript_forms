@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Collecting Card Information</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Secure Fields Form js SAQ A-->
+  <script language="JavaScript" type="text/javascript"
+    src="https://js.paymentsos.com/v2/latest/secure-fields.min.js"></script>
+  <!-- Animation -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.all.min.js"></script>
+</head>
+
+<body>
+  <!-- Secure Fields Form Tab Content -->
+  <div class="panel" id="secure-fields-form">
+    <div>
+      <h2>Secure Fields Form Sample V2</h2>
+      <p class="subtitle">SAQ A</p>
+    </div>
+    <div>
+      <hr class="solid">
+    </div>
+    <div class="form-container">
+      <form id="secure-fields-form">
+        <table>
+          <tr style="margin-bottom: 10px;">
+            <td><label for="ssf-cardholder-name">Cardholder</label></td>
+            <td><input id="ssf-cardholder-name" class="field" placeholder="John Doe" /></td>
+          </tr>
+          <tr>
+            <td><label for="card-secure-fields">Card</label></td>
+            <td>
+              <div id="card-secure-fields" class="field"><!-- The payment form will be displayed here --></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2"> <!-- Utiliza colspan para que el botón ocupe ambas columnas -->
+              <button class="btn" type="submit" id="ssf-pay-button">Generate Token</button>
+            </td>
+          </tr>
+        </table>
+      </form>
+      <div id="sff-message" class="message"></div>
+    </div>
+  </div>
+</body>
+
+<!-- Secure Fields Form Script -->
+<script>
+
+  // Creates Card Secure Fields Form
+  function createCardSecureFieldsForm(env, key, style, element) {
+    POS.setEnvironment(env); // environment
+    POS.setPublicKey(key) // public key
+    POS.setStyle(style); // Style
+    POS.setCardNumberPlaceholder("Card number");
+    POS.setExpirationDatePlaceholder("MM / YY");
+    POS.setSecurityNumberPlaceholder("CVV");
+    // POS.disableCardFormatter();
+    // POS.disableCardImage();
+    // POS.disableSecurityNumber();
+    // POS.disableLuhnValidation();
+    // POS.setDirectionRtl();
+    return new POS.initSecureFields(element);
+  }
+
+  function validateForm(holderName) {
+
+    if (holderName == '') {
+      return 'Please enter a valid cardholder name';
+    }
+    else {
+      return true;
+    }
+  }
+
+  // Show a message to user
+  function showMessage(message, color) {
+    document.getElementById("sff-message").textContent = message.toString();
+    document.getElementById("sff-message").style.color = color;
+  }
+
+  // Creates tokenization
+  async function getTokenAndCvv() {
+
+    const SSF_STYLE = {
+      base: { // Common to all input fields
+        color: '#333',
+        fontWeight: 500,
+        fontFamily: "Quicksand, Open Sans, Segoe UI, sans-serif",
+        fontSize: '13px',
+        // Here you can style the span element that wraps the secure fields.
+        // The default values are shown below.
+        secureFields: {
+          top: 0
+        },
+        // The Primary Account Number (PAN) field is always included in the form.
+        // You can style it here.
+        pan: {
+          fontSize: '13px'
+        },
+        // The expirationDate field is always included in the form.
+        // You can style it here.
+        expirationDate: {
+          color: '#333',
+          fontSize: '13px',
+          // width: '70px'
+        },
+        // Unless you disable the cvv field, it will be included in the form.
+        // You can style it here.
+        cvv: {
+          color: '#333',
+          fontSize: '13px',
+        }
+      }
+    };
+
+    // Set your environment. Values are either "test" or "live". 
+    // If omitted, the test environment will be used.
+    createCardSecureFieldsForm(
+      '', // SET ENVIRONMENT
+      '', // SET PUBLICK KEY
+      SSF_STYLE,
+      'card-secure-fields');
+
+    return new Promise((resolve, reject) => {
+      document.getElementById('secure-fields-form').addEventListener('submit', async (event) => {
+        event.preventDefault()
+
+        const cardholderValue = document.getElementById("ssf-cardholder-name").value;
+        const isFormValid = validateForm(cardholderValue);
+
+        if (isFormValid == true) {
+
+          additionalData = {
+            holder_name: cardholderValue
+          }
+
+          data = await POS.createToken(
+            additionalData,
+            // callback function, needed for grabbing the card token from the POSC.tokenize function
+            function showToken(data) {
+              result = JSON.parse(data);
+              // Token Data
+              resolve({ token: result.token, encrypted_cvv: result.encrypted_cvv });
+              // Shows tokenization response for illustration purposes  
+              showMessage(data, "black");
+              // Shows tokenization response for illustration purposes
+              Swal.fire({
+                icon: 'success',
+                title: 'Successful request!',
+                text: data,
+                confirmButtonText: 'OK',
+                timer: 100000000,
+                timerProgressBar: true,
+                showClass: {
+                  popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                  popup: 'animate__animated animate__fadeOutUp'
+                }
+              });
+            }
+          );
+        } else {
+          // Shows card validation alert
+          showMessage(isFormValid, "red");
+        }
+      });
+
+    });
+  }
+
+  // USE THE TOKEN DATA TO CREATE THE CHARGE/AUTHORIZATION REQUEST
+  async function main() {
+    try {
+      const { token, encrypted_cvv } = await getTokenAndCvv(); // TOKEN AND ENCRYPTED CVV
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  main();
+
+</script>
+
+<!-- Page Styling -->
+<style>
+  body {
+    background: aliceblue;
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  hr.solid {
+    border-top: 3px solid #bbb;
+    margin-bottom: 2em;
+  }
+
+  .panel {
+    margin: 0 auto;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    display: block;
+    width: min-content;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    place-content: center;
+  }
+
+  .label {
+    display: flex;
+    width: 100%;
+    margin-bottom: 1em;
+    justify-content: center;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #333;
+  }
+
+  .form-container {
+    width: initial;
+    margin: 0 auto;
+  }
+
+  .secure-fields-form {
+    width: min-content;
+  }
+
+  .table {
+    word-break: break-word;
+  }
+
+  td {
+    padding: 10px;
+  }
+
+  #ssf-cardholder-name::placeholder {
+    color: #767676;
+  }
+
+  .field {
+    box-sizing: border-box;
+    line-height: 3.5;
+    font-size: 13px;
+    font-weight: 500;
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+    color: #333;
+    border: 1px solid #ddd;
+    background-color: transparent;
+    outline: none;
+    border-radius: 10px;
+    position: relative;
+    word-break: break-word;
+    font-family: Quicksand, Open Sans, Segoe UI, sans-serif;
+    opacity: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    height: 50px;
+  }
+
+  ::placeholder {
+    color: rgb(155, 172, 200);
+    opacity: 1;
+    line-height: 1.5;
+    font-family: sans-serif;
+  }
+
+  .btn {
+    background: linear-gradient(to bottom, #4265af 0%, #00a7a4 100%);
+    color: #fff;
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom-color: rgba(46, 86, 153, 0.4);
+    border-top: 0;
+    border-radius: 10px;
+    font-size: 1.2em;
+    text-shadow: rgba(46, 86, 153, 0.298039) 0px -1px 0px;
+    line-height: 0.5em;
+    -webkit-font-smoothing: antialiased;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.3s ease-in-out;
+    cursor: pointer;
+    letter-spacing: 1px;
+    padding: 1em;
+  }
+
+  .btn:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    transition: none;
+  }
+
+  .message {
+    text-align: center;
+    overflow-wrap: break-word;
+    margin-top: 1em;
+  }
+</style>
+
+</html>
+
+<!-- 
+  
+  After you create the token, you can use it to capture customer funds.
+  Consider that it is necessary to create Payment resource first.
+  Please read the documentation for more:
+
+  Setting Up PaymentsOS
+  https://developers.paymentsos.com/docs/getting-started/setting-up-paymentsos.html
+
+  Providers
+  https://developers.paymentsos.com/docs/connect/finding-a-provider.html
+
+  Body Builder Tool
+  https://developers.paymentsos.com/docs/connect/creating-sample-requests.html
+
+  Create Payment
+  https://developers.paymentsos.com/docs/flows-and-operations/payment-and-transaction-statuses.html
+
+  Charge Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/charge.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Charges
+
+  Authorization and Capture Flow
+  https://developers.paymentsos.com/docs/flows-and-operations/authorize-capture.html
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Authorizations
+  https://developers.paymentsos.com/docs/apis/payments/1.3.0/#tag/Captures
+  
+-->
