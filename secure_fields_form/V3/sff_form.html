@@ -109,7 +109,7 @@
 
   // Creates card number field
   function createCardNumberField(secureFieldsForm) {
-    const cardNumber = secureFieldsForm.create("cardNumber", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES, includeCardImage: true });
+    const cardNumber = secureFieldsForm.create("cardNumber", { cardFormat: true, classes: SSF_CLASSES, disabled: false, includeCardImage: true, placeholders: SSF_PLACEHOLDERS, style: SSF_STYLE });
     cardNumber.mount("#ssf-card-number");
     addFieldEventListeners(cardNumber, "card number");
     return cardNumber;
@@ -117,7 +117,7 @@
 
   // Creates card expiration date field
   function createExpiryField(secureFieldsForm) {
-    const expiry = secureFieldsForm.create("creditCardExpiry", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES });
+    const expiry = secureFieldsForm.create("creditCardExpiry", { cardFormat: true, classes: SSF_CLASSES, disabled: false, placeholders: SSF_PLACEHOLDERS, style: SSF_STYLE });
     expiry.mount("#ssf-exp-date");
     addFieldEventListeners(expiry, "expiry");
     return expiry;
@@ -125,7 +125,7 @@
 
   // Creates cvv field
   function createCvvField(secureFieldsForm) {
-    const cvv = secureFieldsForm.create("cvv", { style: SSF_STYLE, placeholders: SSF_PLACEHOLDERS, classes: SSF_CLASSES });
+    const cvv = secureFieldsForm.create("cvv", { cardFormat: true, classes: SSF_CLASSES, disabled: false, placeholders: SSF_PLACEHOLDERS, style: SSF_STYLE });
     cvv.mount("#ssf-cvv");
     addFieldEventListeners(cvv, "cvv");
     return cvv;
@@ -150,15 +150,15 @@
     });
   }
 
-  function validateForm(holderName, cardNumberComplete, expirationDateComplete, cvvComplete) {
+  function validateForm(holderName, cardNumber, expirationDate, cvv) {
 
     if (holderName == '') {
       return 'Please enter a valid cardholder name';
-    } else if (cardNumberComplete == false) {
+    } else if (cardNumber._elementState.complete == false && cardNumber._elementState.invalid == true) {
       return 'Please enter a valid card number';
-    } else if (expirationDateComplete == false) {
+    } else if (expirationDate._elementState.complete == false && expirationDate._elementState.invalid == true) {
       return 'Please enter a valid card expiration date';
-    } else if (cvvComplete == false) {
+    } else if (cvv._elementState.complete == false && expirationDate._elementState.invalid == true) {
       return 'Please enter a valid card security code';
     }
     else {
@@ -184,11 +184,15 @@
         event.preventDefault()
 
         const cardholderValue = document.getElementById("ssf-cardholder-name").value;
-        const cardNumberIsComplete = formElements.cardNumber._elementState.complete;
-        const cardExpirationIsComplete = formElements.expirationDate._elementState.complete;
-        const cardCvvIsComplete = formElements.cvv._elementState.complete;
+        const cardNumber = formElements.cardNumber;
+        const cardExpiration = formElements.expirationDate;
+        const cardCvv = formElements.cvv;
 
-        const isFormValid = validateForm(cardholderValue, cardNumberIsComplete, cardExpirationIsComplete, cardCvvIsComplete);
+        console.log('Card Number Element State', formElements.cardNumber._elementState);
+        console.log('Expiration Date Element State', formElements.expirationDate._elementState);
+        console.log('CVV Element State', formElements.cvv._elementState);
+
+        const isFormValid = validateForm(cardholderValue, cardNumber, cardExpiration, cardCvv);
 
         if (isFormValid == true) {
 
